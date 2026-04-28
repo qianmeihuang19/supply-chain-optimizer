@@ -1,0 +1,23 @@
+# 核心框架
+fastapi==0.115.0
+uvicorn==0.30.0
+streamlit==1.38.0
+
+# 数据库
+sqlalchemy==2.0.35
+alembic==1.13.0
+
+# 优化求解器
+ortools==9.10.4067
+
+# 数据处理
+pandas==2.2.0
+numpy==1.26.0
+openpyxl==3.1.5
+
+# 可视化
+plotly==5.24.0
+
+# 工具
+python-dateutil==2.9.0
+pydantic==2.9.0
