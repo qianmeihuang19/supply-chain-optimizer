@@ -112,7 +112,7 @@ class ForecastConfidence(Base):
     source = Column(String(20), nullable=False, default="manual")
     manual_override = Column(Float, nullable=True)
     system_suggested = Column(Float, nullable=True)
-    bias_direction = Column(Float, nullable=True)
+    bias_direction = Column(String(10), nullable=True)   # "over" | "under" | "neutral"
     bias_correction = Column(Float, nullable=True)
     sample_size = Column(Integer, nullable=True, default=0)
     last_updated = Column(DateTime, nullable=True)

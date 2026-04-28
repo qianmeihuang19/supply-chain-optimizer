@@ -243,7 +243,7 @@ def seed_safety_stock_params(session: Session):
 
 
 def seed_transfer_routes(session: Session):
-    """6 inter-terminal routes + 3 return routes."""
+    """6 inter-terminal routes only. Return-to-origin logistics is handled by return_params."""
     costs = {
         ("CC", "DL"): (1, 80, 5),
         ("CC", "TJ"): (2, 100, 5),
@@ -257,13 +257,6 @@ def seed_transfer_routes(session: Session):
             from_dest=f, to_dest=t,
             transfer_days=days, transfer_cost_per_pallet=cost,
             min_transfer_qty=min_q, is_return_route=False,
-        ))
-    # Return routes
-    for dest in DEST_CODES:
-        session.add(TransferRoute(
-            from_dest=dest, to_dest="SH",
-            transfer_days=4, transfer_cost_per_pallet=150,
-            min_transfer_qty=1, is_return_route=True,
         ))
     session.commit()
 
@@ -304,8 +297,8 @@ def seed_cargo_value_params(session: Session):
     session.add(CargoValueParam(
         sku_id=SKU_ID,
         unit_value_per_pallet=20000.0,
-        damage_rate_per_handling=0.5,
-        time_decay_rate=0.1,
+        damage_rate_per_handling=0.005,   # 0.5% per handling as fraction
+        time_decay_rate=0.001,            # 0.1%/day as fraction
         shelf_life_days=None,
         secondary_transfer_penalty=1.3,
     ))
@@ -335,6 +328,11 @@ def seed_terminal_demand_probability(session: Session):
 def seed_sales_forecasts(session: Session) -> list[dict]:
     """Generate SIM_DAYS of forecast data and return order records for downstream tables."""
     from ..utils.helpers import get_transit_days
+    from .models import ForecastConfidence
+
+    # Build (customer_id, dest_id) -> confidence_value lookup from seeded table
+    conf_rows = session.query(ForecastConfidence).all()
+    conf_lookup = {(r.customer_id, r.dest_id): r.confidence_value for r in conf_rows}
 
     records = []
     seq = 1
@@ -352,8 +350,11 @@ def seed_sales_forecasts(session: Session) -> list[dict]:
                     hour=8, minute=int(rng.integers(0, 60))
                 ))
 
-                # base confidence from the forecast_confidence table
-                conf = 0.80  # default
+                # snapshot confidence from seeded table; fall back to dest-level then global default
+                conf = conf_lookup.get(
+                    (customer, dest),
+                    conf_lookup.get((None, dest), 0.80),
+                )
                 # adjusted quantity
                 adjusted = max(1, int(qty * conf))
 
@@ -426,11 +427,11 @@ def seed_order_confirmations(session: Session, forecasts: list[dict]):
         confirm_dt = datetime.combine(confirm_date, datetime.min.time().replace(hour=10))
 
         if confirm_offset >= 0 and py_rng.random() < 0.3:
-            # scenario C/D: arrival_alarm
+            # Cargo arrived but customer has not yet confirmed — alarm triggered, awaiting resolution
             status = "arrival_alarm"
             confirmed_by = None
             alarm_dt = datetime.combine(arrival_date, datetime.min.time().replace(hour=8))
-            confirmed_at = confirm_dt
+            confirmed_at = None   # not yet confirmed; confirmed_at set only on resolution
         else:
             status = "customer_confirmed"
             confirmed_by = f"CUST_{cust}"
@@ -472,7 +473,7 @@ def seed_forecast_deviation_log(session: Session, forecasts: list[dict], confirm
         fc = conf_map.get(rec["forecast_id"])
         if fc is None:
             continue
-        if fc["status"] == "cancelled":
+        if fc["confirmed_quantity"] == 0:
             direction = "cancelled"
         elif fc["confirmed_quantity"] > rec["quantity_pallets"]:
             direction = "over"
