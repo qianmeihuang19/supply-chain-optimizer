@@ -1,0 +1,11 @@
+__pycache__/
+*.pyc
+*.pyo
+*.db
+*.sqlite
+data/supply_chain.db
+.env
+*.egg-info/
+dist/
+build/
+.venv/
