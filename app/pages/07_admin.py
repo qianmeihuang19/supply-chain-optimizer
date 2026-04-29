@@ -1,12 +1,20 @@
 """Page 7: System Administration — x value, confidence, safety stock, etc."""
+import sys
+from pathlib import Path
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent))
+
 import streamlit as st
+import pandas as pd
+from src.engines.loading_calculator import (
+    VEHICLE_SPECS, PALLET_SPECS, calculate_loading, calculate_all_combinations, get_loading_rate,
+)
 
 st.set_page_config(page_title="系统管理", page_icon="⚙️", layout="wide")
 st.title("⚙️ 系统管理")
 st.caption("交付时效目标(x)、预测置信度、安全库存参数配置")
 
-tab1, tab2, tab3, tab4, tab5 = st.tabs([
-    "x值配置", "置信度管理", "安全库存参数", "车辆资源", "运价维护",
+tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs([
+    "x值配置", "置信度管理", "安全库存参数", "车辆资源", "运价维护", "装载率计算",
 ])
 
 with tab1:
@@ -72,3 +80,40 @@ with tab5:
         "单价": [12000, 10000, 8000],
         "紧急附加": [1.0, 1.5, 1.0],
     }, use_container_width=True, hide_index=True)
+
+with tab6:
+    st.subheader("装载率计算")
+    st.caption("基于托盘尺寸 × 车辆尺寸 × 限重限高，自动计算最大装载量")
+
+    st.subheader("标准组合一览")
+    rows = []
+    for r in calculate_all_combinations():
+        rows.append({
+            "车型": r.vehicle_type,
+            "托盘规格": r.pallet_type,
+            "最大装载(托)": r.max_pallets,
+            "体积限制(托)": r.volume_limited,
+            "重量限制(托)": r.weight_limited,
+            "叠放层数": r.layers,
+            "每层数量": r.pallets_per_layer,
+            "装载方案": r.arrangement_description,
+        })
+    st.dataframe(pd.DataFrame(rows), use_container_width=True, hide_index=True)
+
+    st.markdown("---")
+    st.subheader("自定义装载率计算")
+    col1, col2, col3 = st.columns(3)
+    with col1:
+        sel_vehicle = st.selectbox("车型", list(VEHICLE_SPECS.keys()))
+    with col2:
+        sel_pallet = st.selectbox("托盘规格", list(PALLET_SPECS.keys()))
+    with col3:
+        actual_qty = st.number_input("实际发运量(托)", min_value=1, max_value=100, value=20)
+
+    result = calculate_loading(VEHICLE_SPECS[sel_vehicle], PALLET_SPECS[sel_pallet], actual_pallets=actual_qty)
+    c1, c2, c3, c4 = st.columns(4)
+    c1.metric("最大容量(托)", result.max_pallets)
+    c2.metric("实际发运(托)", actual_qty)
+    c3.metric("装载率", f"{result.loading_rate_pct}%")
+    c4.metric("约束因素", "体积" if result.volume_limited <= result.weight_limited else "重量")
+    st.info(f"装载方案: {result.arrangement_description}")
