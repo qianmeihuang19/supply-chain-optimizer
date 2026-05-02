@@ -350,10 +350,13 @@ def seed_sales_forecasts(session: Session) -> list[dict]:
                     hour=8, minute=int(rng.integers(0, 60))
                 ))
 
-                # snapshot confidence from seeded table; fall back to dest-level then global default
+                # snapshot confidence: customer+dest → dest-level → global (None,None) → hardcoded default
                 conf = conf_lookup.get(
                     (customer, dest),
-                    conf_lookup.get((None, dest), 0.80),
+                    conf_lookup.get(
+                        (None, dest),
+                        conf_lookup.get((None, None), 0.80),
+                    ),
                 )
                 # adjusted quantity
                 adjusted = max(1, int(qty * conf))
@@ -464,7 +467,7 @@ def seed_order_confirmations(session: Session, forecasts: list[dict]):
 
 
 def seed_forecast_deviation_log(session: Session, forecasts: list[dict], confirmations: list[dict]):
-    """Log deviations for completed confirmations."""
+    """Log deviations for finalized confirmations only (excludes unresolved arrival_alarm rows)."""
     conf_map = {c["forecast_id"]: c for c in confirmations}
 
     records = []
@@ -472,6 +475,9 @@ def seed_forecast_deviation_log(session: Session, forecasts: list[dict], confirm
     for rec in forecasts[:500]:  # limit for performance
         fc = conf_map.get(rec["forecast_id"])
         if fc is None:
+            continue
+        # Skip unresolved alarms — they are not yet finalized forecast outcomes
+        if fc["status"] == "arrival_alarm":
             continue
         if fc["confirmed_quantity"] == 0:
             direction = "cancelled"
@@ -563,7 +569,7 @@ def seed_all(session: Session, simulate: bool = True) -> dict:
         "penalty_rules": 3,
         "forecast_confidence": 9,
         "safety_stock_params": 3,
-        "transfer_routes": 9,
+        "transfer_routes": 6,
         "return_params": 3,
         "terminal_capabilities": 3,
         "cargo_value_params": 1,

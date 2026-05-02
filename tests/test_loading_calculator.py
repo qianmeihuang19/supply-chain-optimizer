@@ -57,11 +57,13 @@ class TestStandardCapacity:
         result_40ft = calculate_loading(container_40ft(), eur_pallet())
         assert result.max_pallets >= result_40ft.max_pallets
 
-    def test_jp_pallet_fits_less_than_eur_in_40ft(self):
-        eur = calculate_loading(container_40ft(), eur_pallet())
+    def test_jp_pallet_40ft_exact_capacity(self):
         jp = calculate_loading(container_40ft(), jp_pallet())
-        # JP is wider and heavier; may fit fewer or similar count
-        assert jp.max_pallets >= 0
+        # 40ft 12032×2352mm, JP 1100×1100+50gap:
+        # 10 cols (length) × 2 rows (width) = 20/layer × 2 layers = 40
+        assert jp.max_pallets == 40
+        assert jp.layers == 2
+        assert jp.pallets_per_layer == 20
 
     def test_returns_loading_result_type(self):
         result = calculate_loading(container_40ft(), eur_pallet())
@@ -169,4 +171,26 @@ class TestEdgeCases:
             max_height_mm=1500, max_weight_kg=1000,
         )
         result = calculate_loading(tiny_truck, eur_pallet())
-        assert result.max_pallets >= 0
+        # volume: orientation B 3 cols × 1 row × 1 layer = 3; weight: 1000/600 = 1 → weight limited
+        assert result.weight_limited == 1
+        assert result.max_pallets == 1
+
+    def test_pallet_wider_than_vehicle_returns_zero(self):
+        too_narrow = VehicleSpec(
+            vehicle_type="too_narrow",
+            inner_length_mm=5000, inner_width_mm=500,   # narrower than any pallet
+            max_height_mm=3000, max_weight_kg=99999,
+        )
+        result = calculate_loading(too_narrow, eur_pallet())
+        assert result.max_pallets == 0
+
+    def test_pallet_taller_than_vehicle_returns_zero(self):
+        too_short = VehicleSpec(
+            vehicle_type="too_short",
+            inner_length_mm=5000, inner_width_mm=3000,
+            max_height_mm=500,   # shorter than pallet height (1200mm)
+            max_weight_kg=99999,
+        )
+        result = calculate_loading(too_short, eur_pallet())
+        assert result.layers == 0
+        assert result.max_pallets == 0

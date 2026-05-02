@@ -108,7 +108,11 @@ with tab6:
     with col2:
         sel_pallet = st.selectbox("托盘规格", list(PALLET_SPECS.keys()))
     with col3:
-        actual_qty = st.number_input("实际发运量(托)", min_value=1, max_value=100, value=20)
+        # compute max first so we can cap the input
+        _preview = calculate_loading(VEHICLE_SPECS[sel_vehicle], PALLET_SPECS[sel_pallet])
+        actual_qty = st.number_input(
+            "实际发运量(托)", min_value=0, max_value=_preview.theoretical_max, value=min(20, _preview.theoretical_max)
+        )
 
     result = calculate_loading(VEHICLE_SPECS[sel_vehicle], PALLET_SPECS[sel_pallet], actual_pallets=actual_qty)
     c1, c2, c3, c4 = st.columns(4)
@@ -116,4 +120,6 @@ with tab6:
     c2.metric("实际发运(托)", actual_qty)
     c3.metric("装载率", f"{result.loading_rate_pct}%")
     c4.metric("约束因素", "体积" if result.volume_limited <= result.weight_limited else "重量")
+    if actual_qty > result.max_pallets:
+        st.warning(f"⚠️ 实际发运量 {actual_qty} 超过最大容量 {result.max_pallets}，装载率超过 100%")
     st.info(f"装载方案: {result.arrangement_description}")

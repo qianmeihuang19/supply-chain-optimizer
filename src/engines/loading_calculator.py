@@ -97,7 +97,7 @@ def _pallets_per_layer(vehicle: VehicleSpec, pallet: PalletSpec) -> tuple[int, s
     gap = pallet.gap_mm
 
     def fit_1d(space: float, unit: float) -> int:
-        if unit <= 0:
+        if unit <= 0 or space < unit:
             return 0
         # first pallet fits without leading gap; each subsequent needs +gap
         n = 1
@@ -134,9 +134,8 @@ def calculate_loading(
         pallet: Pallet dimensions, weight, and stacking spec.
         actual_pallets: If provided, compute loading_rate_pct against this instead of max.
     """
-    # Max stacking layers limited by vehicle height
-    stacked_height = pallet.height_mm * pallet.stackable_layers
-    max_layers_by_height = max(1, int(vehicle.max_height_mm // pallet.height_mm))
+    # Max stacking layers limited by vehicle height; 0 if pallet taller than vehicle
+    max_layers_by_height = int(vehicle.max_height_mm // pallet.height_mm)
     layers = min(pallet.stackable_layers, max_layers_by_height)
 
     per_layer, arrangement_desc = _pallets_per_layer(vehicle, pallet)
