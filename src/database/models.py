@@ -297,3 +297,16 @@ class TransferPlan(Base):
     storage_cost_saved = Column(Float, nullable=False, default=0)
     total_cost = Column(Float, nullable=False, default=0)
     status = Column(String(20), nullable=False, default="planned")
+
+
+class LoadingConfig(Base):
+    """Admin-confirmed loading capacities, overriding the system calculation."""
+    __tablename__ = "loading_config"
+
+    vehicle_type = Column(String(30), primary_key=True)
+    pallet_type = Column(String(30), primary_key=True)
+    theoretical_max = Column(Integer, nullable=False)   # system-calculated
+    confirmed_max = Column(Integer, nullable=True)      # admin override; None = use theoretical
+    notes = Column(Text, nullable=True)
+    confirmed_by = Column(String(30), nullable=True)
+    confirmed_at = Column(DateTime, nullable=True)

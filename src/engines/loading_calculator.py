@@ -181,6 +181,23 @@ def calculate_all_combinations() -> list[LoadingResult]:
     return results
 
 
+def get_effective_max_pallets(session, vehicle_type: str, pallet_type: str) -> int:
+    """Return the effective max pallets, using admin-confirmed value when available.
+
+    Falls back to the system-calculated max if no override is set.
+    Requires a live SQLAlchemy session (import LoadingConfig lazily to avoid circular deps).
+    """
+    from src.database.models import LoadingConfig  # local import to avoid circular dependency
+    cfg = session.query(LoadingConfig).filter_by(
+        vehicle_type=vehicle_type, pallet_type=pallet_type
+    ).first()
+    if cfg is not None and cfg.confirmed_max is not None:
+        return cfg.confirmed_max
+    vehicle = VEHICLE_SPECS[vehicle_type]
+    pallet = PALLET_SPECS[pallet_type]
+    return calculate_loading(vehicle, pallet).max_pallets
+
+
 def get_loading_rate(
     vehicle_type: str,
     pallet_type: str,

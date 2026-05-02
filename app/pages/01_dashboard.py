@@ -51,6 +51,6 @@ plan_df = pd.DataFrame({
     "类型": ["预置", "响应式", "预置"],
     "托盘数": [30, 15, 25],
     "计划发货": ["2025-04-20", "2025-04-21", "2025-04-20"],
-    "状态": ["draft", "locked", "draft"],
+    "状态": ["草稿", "已锁定", "草稿"],
 })
 st.dataframe(plan_df, use_container_width=True, hide_index=True)

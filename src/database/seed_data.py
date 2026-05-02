@@ -23,6 +23,7 @@ from .models import (
     ForecastConfidence,
     ForecastDeviationLog,
     FreightRate,
+    LoadingConfig,
     OrderConfirmation,
     PackagingSpec,
     PenaltyRule,
@@ -538,6 +539,28 @@ def seed_terminal_inventory(session: Session):
     session.commit()
 
 
+def seed_loading_config(session: Session):
+    """Seed loading_config with system-calculated values (no confirmed overrides)."""
+    from src.engines.loading_calculator import VEHICLE_SPECS, PALLET_SPECS, calculate_loading
+    for vehicle in VEHICLE_SPECS.values():
+        for pallet in PALLET_SPECS.values():
+            existing = session.query(LoadingConfig).filter_by(
+                vehicle_type=vehicle.vehicle_type, pallet_type=pallet.pallet_type
+            ).first()
+            if existing is None:
+                result = calculate_loading(vehicle, pallet)
+                session.add(LoadingConfig(
+                    vehicle_type=vehicle.vehicle_type,
+                    pallet_type=pallet.pallet_type,
+                    theoretical_max=result.max_pallets,
+                    confirmed_max=None,
+                    notes=None,
+                    confirmed_by=None,
+                    confirmed_at=None,
+                ))
+    session.commit()
+
+
 def seed_all(session: Session, simulate: bool = True) -> dict:
     """Seed all tables. Returns a summary dict.
 
@@ -559,6 +582,7 @@ def seed_all(session: Session, simulate: bool = True) -> dict:
     seed_terminal_capabilities(session)
     seed_cargo_value_params(session)
     seed_terminal_demand_probability(session)
+    seed_loading_config(session)
 
     summary = {
         "destinations": 3,
@@ -574,6 +598,7 @@ def seed_all(session: Session, simulate: bool = True) -> dict:
         "terminal_capabilities": 3,
         "cargo_value_params": 1,
         "terminal_demand_probability": 3,
+        "loading_config": 4,
     }
 
     if simulate:

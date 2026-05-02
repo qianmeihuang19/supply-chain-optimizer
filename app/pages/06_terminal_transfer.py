@@ -26,7 +26,7 @@ with tab1:
         "总预测量": [450, 380, 520],
         "总确认量": [420, 360, 480],
         "偏差率": ["-6.7%", "-5.3%", "-7.7%"],
-        "偏差方向": ["under", "under", "under"],
+        "偏差方向": ["低于预测", "低于预测", "低于预测"],
     }, use_container_width=True, hide_index=True)
 
 with tab2:
@@ -40,7 +40,7 @@ with tab2:
         "目标": ["长春(CC)", "长春(CC)"],
         "数量": [8, 5],
         "调拨成本": ["¥640", "¥500"],
-        "状态": ["planned", "planned"],
+        "状态": ["计划中", "计划中"],
     }, use_container_width=True, hide_index=True)
 
     st.subheader("成本明细")
