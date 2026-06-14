@@ -28,6 +28,22 @@ class Base(DeclarativeBase):
 # =============================================================================
 
 
+class Shipper(Base):
+    __tablename__ = "shippers"
+
+    shipper_id = Column(String(20), primary_key=True)
+    shipper_name = Column(String(50), nullable=False)
+    contact = Column(String(50), nullable=True)
+
+
+class Customer(Base):
+    __tablename__ = "customers"
+
+    customer_id = Column(String(20), primary_key=True)
+    customer_name = Column(String(50), nullable=False)
+    contact = Column(String(50), nullable=True)
+
+
 class Destination(Base):
     __tablename__ = "destinations"
 
@@ -204,7 +220,8 @@ class SalesForecast(Base):
     __tablename__ = "sales_forecasts"
 
     forecast_id = Column(String(20), primary_key=True)
-    customer_id = Column(String(20), nullable=False)
+    shipper_id = Column(String(20), ForeignKey("shippers.shipper_id"), nullable=True)
+    customer_id = Column(String(20), ForeignKey("customers.customer_id"), nullable=False)
     destination = Column(String(10), ForeignKey("destinations.dest_id"), nullable=False)
     sku_id = Column(String(20), ForeignKey("cargo_value_params.sku_id"), nullable=True)
     quantity_pallets = Column(Integer, nullable=False)
@@ -220,9 +237,7 @@ class ShipmentPlan(Base):
 
     plan_id = Column(String(20), primary_key=True)
     batch_id = Column(String(20), nullable=False)
-    customer_id = Column(String(20), nullable=True)
     destination = Column(String(10), ForeignKey("destinations.dest_id"), nullable=False)
-    sku_id = Column(String(20), ForeignKey("cargo_value_params.sku_id"), nullable=True)
     plan_type = Column(String(20), nullable=False)       # preposition / responsive / emergency
     transport_mode = Column(String(30), nullable=False, default="公路/车辆")  # 公路/车辆 / 水路 / 铁路
     planned_ship_date = Column(Date, nullable=False)
@@ -240,11 +255,25 @@ class ShipmentPlan(Base):
     status = Column(String(20), nullable=False, default="draft")
 
 
+class ShipmentPlanItem(Base):
+    """Per-shipper/customer cargo breakdown within a shipment plan."""
+    __tablename__ = "shipment_plan_items"
+
+    item_id = Column(String(20), primary_key=True)
+    plan_id = Column(String(20), ForeignKey("shipment_plans.plan_id"), nullable=False)
+    shipper_id = Column(String(20), ForeignKey("shippers.shipper_id"), nullable=False)
+    customer_id = Column(String(20), ForeignKey("customers.customer_id"), nullable=False)
+    sku_id = Column(String(20), ForeignKey("cargo_value_params.sku_id"), nullable=True)
+    quantity_pallets = Column(Integer, nullable=False)
+
+
 class OrderConfirmation(Base):
     __tablename__ = "order_confirmations"
 
     confirm_id = Column(String(20), primary_key=True)
     forecast_id = Column(String(20), ForeignKey("sales_forecasts.forecast_id"), nullable=False)
+    shipper_id = Column(String(20), ForeignKey("shippers.shipper_id"), nullable=True)
+    customer_id = Column(String(20), ForeignKey("customers.customer_id"), nullable=True)
     sku_id = Column(String(20), ForeignKey("cargo_value_params.sku_id"), nullable=True)
     confirmed_quantity = Column(Integer, nullable=True)
     confirmed_at = Column(DateTime, nullable=True)

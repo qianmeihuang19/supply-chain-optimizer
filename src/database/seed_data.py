@@ -19,6 +19,7 @@ from sqlalchemy.orm import Session
 from .models import (
     CargoValueParam,
     Carrier,
+    Customer,
     DeliveryTarget,
     Destination,
     ForecastConfidence,
@@ -31,7 +32,9 @@ from .models import (
     ReturnParam,
     SafetyStockParam,
     SalesForecast,
+    Shipper,
     ShipmentPlan,
+    ShipmentPlanItem,
     TerminalCapability,
     TerminalDemandProbability,
     TerminalInventory,
@@ -47,6 +50,21 @@ CARRIER_IDS = ["CR001", "CR002"]
 DEST_CODES = ["CC", "DL", "TJ"]
 DEST_NAMES = {"CC": "长春", "DL": "大连", "TJ": "天津"}
 SKU_ID = "SKU001"
+
+SHIPPERS = [
+    ("SH001", "上海远程贸易有限公司", "021-6888-0001"),
+    ("SH002", "上海联合供应链有限公司", "021-6888-0002"),
+]
+CUSTOMERS_DATA = [
+    ("CUST001", "长春华润商贸有限公司", "0431-8800-0001"),
+    ("CUST002", "大连盛世零售有限公司", "0411-8800-0002"),
+    ("CUST003", "天津顺达供应链有限公司", "022-8800-0003"),
+]
+CUSTOMER_SHIPPER = {
+    "CUST001": "SH001",
+    "CUST002": "SH001",
+    "CUST003": "SH002",
+}
 BASE_DATE = date(2025, 4, 1)   # simulation start
 SIM_DAYS = 60                   # 2 months of history
 SPRING_FESTIVAL_MONTHS = {1, 2}
@@ -81,6 +99,18 @@ def _daily_order_count(d: date) -> int:
 # =============================================================================
 # Seed functions for each table
 # =============================================================================
+
+
+def seed_shippers(session: Session):
+    for shipper_id, name, contact in SHIPPERS:
+        session.add(Shipper(shipper_id=shipper_id, shipper_name=name, contact=contact))
+    session.commit()
+
+
+def seed_customers(session: Session):
+    for customer_id, name, contact in CUSTOMERS_DATA:
+        session.add(Customer(customer_id=customer_id, customer_name=name, contact=contact))
+    session.commit()
 
 
 def seed_carriers(session: Session):
@@ -381,6 +411,7 @@ def seed_sales_forecasts(session: Session) -> list[dict]:
 
                 rec = dict(
                     forecast_id=_id("F", seq),
+                    shipper_id=CUSTOMER_SHIPPER[customer],
                     customer_id=customer,
                     destination=dest,
                     sku_id=SKU_ID,
@@ -468,6 +499,8 @@ def seed_order_confirmations(session: Session, forecasts: list[dict]):
         oc = dict(
             confirm_id=_id("OC", seq),
             forecast_id=rec["forecast_id"],
+            shipper_id=rec.get("shipper_id"),
+            customer_id=rec.get("customer_id"),
             sku_id=rec.get("sku_id", SKU_ID),
             confirmed_quantity=confirmed_qty,
             confirmed_at=confirmed_at,
@@ -587,7 +620,9 @@ def seed_all(session: Session, simulate: bool = True) -> dict:
         session: SQLAlchemy session.
         simulate: If True, also generate business data (forecasts, confirmations, etc.).
     """
-    # Base data (14 tables)
+    # Base data (16 tables)
+    seed_shippers(session)
+    seed_customers(session)
     seed_carriers(session)
     seed_destinations(session)
     seed_delivery_targets(session)
@@ -605,6 +640,8 @@ def seed_all(session: Session, simulate: bool = True) -> dict:
     seed_loading_config(session)
 
     summary = {
+        "shippers": 2,
+        "customers": 3,
         "carriers": 2,
         "destinations": 3,
         "delivery_targets": 5,
