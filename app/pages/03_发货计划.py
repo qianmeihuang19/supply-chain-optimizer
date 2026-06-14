@@ -73,17 +73,6 @@ with tab1:
 
 with tab2:
     st.subheader("优化结果 — 推荐方案")
-    st.metric("总成本", "¥45,800")
-    c1, c2, c3, c4 = st.columns(4)
-    with c1:
-        st.metric("运费", "¥32,000")
-    with c2:
-        st.metric("存储成本", "¥5,400")
-    with c3:
-        st.metric("违约成本", "¥0")
-    with c4:
-        st.metric("装载率", "82.5%")
-
     st.dataframe({
         "计划编号": ["PLN0001", "PLN0002", "PLN0003"],
         "目的地": ["CC", "DL", "TJ"],
