@@ -1,6 +1,6 @@
 """Page 2: Sales Forecast Management."""
 import streamlit as st
-from datetime import timedelta
+from datetime import date, timedelta
 
 st.set_page_config(page_title="销售预测管理", page_icon="📈", layout="wide")
 st.title("📈 销售预测管理")
@@ -27,11 +27,20 @@ with tab1:
             due = st.date_input("要求交付日期")
             date_precision = "day"
         else:
-            any_day = st.date_input("选择目标周内任意一天（系统将取该周周三）")
-            # weekday(): Mon=0 ... Sun=6, Wednesday=2
-            wed = any_day - timedelta(days=any_day.weekday()) + timedelta(days=2)
-            st.caption(f"实际存储日期：**{wed}**（周三）")
-            due = wed
+            today = date.today()
+            wcol1, wcol2 = st.columns(2)
+            with wcol1:
+                year = st.number_input("年份", min_value=2025, max_value=2030,
+                                       value=today.year, step=1)
+            with wcol2:
+                max_week = date(int(year), 12, 28).isocalendar()[1]
+                cur_week = today.isocalendar()[1]
+                week_num = st.number_input("第几周（ISO周）", min_value=1,
+                                           max_value=int(max_week),
+                                           value=int(cur_week), step=1)
+            # date.fromisocalendar(year, week, weekday): 3 = Wednesday
+            due = date.fromisocalendar(int(year), int(week_num), 3)
+            st.caption(f"实际存储日期：**{due}**（第 {week_num} 周周三）")
             date_precision = "week"
 
         submitted = st.form_submit_button("提交预测")
