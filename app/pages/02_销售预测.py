@@ -1,5 +1,6 @@
 """Page 2: Sales Forecast Management."""
 import streamlit as st
+from datetime import timedelta
 
 st.set_page_config(page_title="销售预测管理", page_icon="📈", layout="wide")
 st.title("📈 销售预测管理")
@@ -9,6 +10,10 @@ tab1, tab2, tab3 = st.tabs(["预测录入", "预测列表", "订单确认"])
 
 with tab1:
     st.subheader("新增销售预测")
+
+    # Date precision selector outside the form so it can control the form layout
+    precision = st.radio("交付日期精度", ["天", "周"], horizontal=True)
+
     with st.form("new_forecast"):
         col1, col2, col3 = st.columns(3)
         with col1:
@@ -18,10 +23,20 @@ with tab1:
         with col3:
             qty = st.number_input("预测数量(托盘)", min_value=1, max_value=100, value=10)
 
-        due = st.date_input("要求交付日期")
+        if precision == "天":
+            due = st.date_input("要求交付日期")
+            date_precision = "day"
+        else:
+            any_day = st.date_input("选择目标周内任意一天（系统将取该周周三）")
+            # weekday(): Mon=0 ... Sun=6, Wednesday=2
+            wed = any_day - timedelta(days=any_day.weekday()) + timedelta(days=2)
+            st.caption(f"实际存储日期：**{wed}**（周三）")
+            due = wed
+            date_precision = "week"
+
         submitted = st.form_submit_button("提交预测")
         if submitted:
-            st.success(f"预测已提交: {qty}托盘 → {dest}, 交付日 {due}")
+            st.success(f"预测已提交: {qty}托盘 → {dest}, 交付日 {due}（精度：{precision}）")
 
 with tab2:
     st.subheader("已提交预测列表")

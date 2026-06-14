@@ -369,6 +369,7 @@ def seed_sales_forecasts(session: Session) -> list[dict]:
                     quantity_pallets=qty,
                     adjusted_quantity=adjusted,
                     required_date=due,
+                    date_precision="day",
                     created_at=created,
                     batch_id=None,
                     confidence_at_time=conf,
