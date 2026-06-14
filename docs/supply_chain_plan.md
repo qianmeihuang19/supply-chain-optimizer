@@ -95,89 +95,89 @@ Demo场景（本地配送统一1天）：
 ### 3.1 基础数据表
 
 #### 3.1.1 目的地信息 (destinations)
-| 字段 | 类型 | 说明 | 示例 |
-|------|------|------|------|
-| dest_id | string | 目的地编码 | "CC", "DL", "TJ" |
-| dest_name | string | 目的地名称 | "长春", "大连", "天津" |
-| transit_days_normal | int | 正常季节干线在途天数(4-11月) | 4, 3, 2 |
-| transit_days_winter | int | 冬季干线在途天数(12-3月) | 5, 4, 2 |
-| local_delivery_days | float | 终端到客户本地配送时间(天) | 1.0 |
+| 字段 | 类型 | 说明 | 示例 | 来源 |
+|------|------|------|------|------|
+| dest_id | string | 目的地编码 | "CC", "DL", "TJ" | 管理员 |
+| dest_name | string | 目的地名称 | "长春", "大连", "天津" | 管理员 |
+| transit_days_normal | int | 正常季节干线在途天数(4-11月) | 4, 3, 2 | 管理员 |
+| transit_days_winter | int | 冬季干线在途天数(12-3月) | 5, 4, 2 | 管理员 |
+| local_delivery_days | float | 终端到客户本地配送时间(天) | 1.0 | 管理员 |
 
 #### 3.1.2 交付时效目标 (delivery_targets) ★新增★
-| 字段 | 类型 | 说明 | 示例 |
-|------|------|------|------|
-| target_id | string | 编码 | "DT001" |
-| customer_id | string | 客户编码(NULL=全局默认) | "CUST001" |
-| dest_id | string | 目的地编码(NULL=所有目的地) | "CC" |
-| target_days_x | int | 目标交付天数x | 1 |
-| priority | int | 匹配优先级(客户+目的地>客户>目的地>全局) | 10 |
+| 字段 | 类型 | 说明 | 示例 | 来源 |
+|------|------|------|------|------|
+| target_id | string | 编码 | "DT001" | 系统自动 |
+| customer_id | string | 客户编码(NULL=全局默认) | "CUST001" | 管理员 |
+| dest_id | string | 目的地编码(NULL=所有目的地) | "CC" | 管理员 |
+| target_days_x | int | 目标交付天数x | 1 | 管理员 |
+| priority | int | 匹配优先级(客户+目的地>客户>目的地>全局) | 10 | 管理员 |
 
 查询逻辑：先查客户+目的地专属值 → 客户级 → 目的地级 → 全局默认值。
 
 #### 3.1.3 车辆资源 (vehicles)
-| 字段 | 类型 | 说明 | 示例 |
-|------|------|------|------|
-| vehicle_id | string | 车辆编码 | "V001" |
-| vehicle_type | string | 车型 | "40ft_container", "semi_trailer" |
-| carrier_id | string | 承运商编码 | "CR001" |
-| max_weight_kg | float | 最大载重(kg) | 26000 |
-| inner_length_mm | float | 内部长度(mm) | 12032 |
-| inner_width_mm | float | 内部宽度(mm) | 2352 |
-| max_height_mm | float | 最大装载高度(mm) | 2690 |
-| available_from | date | 可用起始日期 | 2025-01-15 |
-| available_to | date | 可用截止日期 | 2025-01-20 |
-| status | string | 状态 | "available", "locked", "in_transit" |
+| 字段 | 类型 | 说明 | 示例 | 来源 |
+|------|------|------|------|------|
+| vehicle_id | string | 车辆编码 | "V001" | 系统自动 |
+| vehicle_type | string | 车型 | "40ft_container", "semi_trailer" | 管理员 |
+| carrier_id | string | 承运商编码 | "CR001" | 管理员 |
+| max_weight_kg | float | 最大载重(kg) | 26000 | 管理员 |
+| inner_length_mm | float | 内部长度(mm) | 12032 | 管理员 |
+| inner_width_mm | float | 内部宽度(mm) | 2352 | 管理员 |
+| max_height_mm | float | 最大装载高度(mm) | 2690 | 管理员 |
+| available_from | date | 可用起始日期 | 2025-01-15 | 管理员 |
+| available_to | date | 可用截止日期 | 2025-01-20 | 管理员 |
+| status | string | 状态 | "available", "locked", "in_transit" | 系统自动更新 |
 
 #### 3.1.4 运价数据 (freight_rates)
-| 字段 | 类型 | 说明 | 示例 |
-|------|------|------|------|
-| rate_id | string | 运价编码 | "FR001" |
-| carrier_id | string | 承运商编码 | "CR001" |
-| origin | string | 起运地 | "SH" |
-| destination | string | 目的地 | "CC" |
-| pricing_mode | string | 计价模式 | "per_vehicle", "per_ton", "per_pallet" |
-| unit_price | float | 单价 | 12000(整车), 450(吨), 120(托盘) |
-| min_charge | float | 最低收费 | 8000 |
-| valid_from | date | 有效起始日 | 2025-01-01 |
-| valid_to | date | 有效截止日 | 2025-03-31 |
-| vehicle_type | string | 适用车型 | "40ft_container" |
-| is_express | bool | 是否为紧急运输(加急) | false |
-| express_surcharge | float | 紧急运输附加费率(倍数) | 1.5 |
+| 字段 | 类型 | 说明 | 示例 | 来源 |
+|------|------|------|------|------|
+| rate_id | string | 运价编码 | "FR001" | 系统自动 |
+| carrier_id | string | 承运商编码 | "CR001" | 管理员 |
+| origin | string | 起运地 | "SH" | 管理员 |
+| destination | string | 目的地 | "CC" | 管理员 |
+| pricing_mode | string | 计价模式 | "per_vehicle", "per_ton", "per_pallet" | 管理员 |
+| unit_price | float | 单价 | 12000(整车), 450(吨), 120(托盘) | 管理员 |
+| min_charge | float | 最低收费 | 8000 | 管理员 |
+| valid_from | date | 有效起始日 | 2025-01-01 | 管理员 |
+| valid_to | date | 有效截止日 | 2025-03-31 | 管理员 |
+| vehicle_type | string | 适用车型 | "40ft_container" | 管理员 |
+| is_express | bool | 是否为紧急运输(加急) | false | 管理员 |
+| express_surcharge | float | 紧急运输附加费率(倍数) | 1.5 | 管理员 |
 
 #### 3.1.5 包装规格 (packaging_specs)
-| 字段 | 类型 | 说明 | 示例 |
-|------|------|------|------|
-| pallet_type | string | 托盘类型 | "EUR_1200x800" |
-| pallet_length_mm | float | 托盘长度 | 1200 |
-| pallet_width_mm | float | 托盘宽度 | 800 |
-| pallet_height_mm | float | 单层货物含托盘高度 | 1200 |
-| pallet_weight_kg | float | 单托盘含货重量 | 600 |
-| stackable_layers | int | 可叠放层数 | 2 |
-| gap_mm | float | 标准装载间隙 | 50 |
+| 字段 | 类型 | 说明 | 示例 | 来源 |
+|------|------|------|------|------|
+| pallet_type | string | 托盘类型 | "EUR_1200x800" | 管理员 |
+| pallet_length_mm | float | 托盘长度 | 1200 | 管理员 |
+| pallet_width_mm | float | 托盘宽度 | 800 | 管理员 |
+| pallet_height_mm | float | 单层货物含托盘高度 | 1200 | 管理员 |
+| pallet_weight_kg | float | 单托盘含货重量 | 600 | 管理员 |
+| stackable_layers | int | 可叠放层数 | 2 | 管理员 |
+| gap_mm | float | 标准装载间隙 | 50 | 管理员 |
 
 #### 3.1.6 违约成本规则 (penalty_rules)
-| 字段 | 类型 | 说明 | 示例 |
-|------|------|------|------|
-| rule_id | string | 规则编码 | "PR001" |
-| customer_id | string | 客户编码 | "CUST001" |
-| penalty_type | string | 违约类型 | "linear", "tiered" |
-| linear_rate | float | 线性违约金(元/天/托盘) | 200 |
-| tier_rules | JSON | 阶梯规则 | [{"days_from":1,"days_to":3,"rate":150},{"days_from":4,"days_to":999,"rate":300}] |
+| 字段 | 类型 | 说明 | 示例 | 来源 |
+|------|------|------|------|------|
+| rule_id | string | 规则编码 | "PR001" | 系统自动 |
+| customer_id | string | 客户编码 | "CUST001" | 管理员 |
+| penalty_type | string | 违约类型 | "linear", "tiered" | 管理员 |
+| linear_rate | float | 线性违约金(元/天/托盘) | 200 | 管理员 |
+| tier_rules | JSON | 阶梯规则 | [{"days_from":1,"days_to":3,"rate":150},{"days_from":4,"days_to":999,"rate":300}] | 管理员 |
 
 #### 3.1.7 预测置信度 (forecast_confidence) ★新增★
-| 字段 | 类型 | 说明 | 示例 |
-|------|------|------|------|
-| confidence_id | string | 编码 | "FC001" |
-| customer_id | string | 客户编码(NULL=全局) | "CUST001" |
-| dest_id | string | 目的地编码(NULL=所有) | "CC" |
-| confidence_value | float | 当前置信度(0.40-0.95) | 0.85 |
-| source | string | 数据来源 | "manual", "system_suggested", "hybrid" |
-| manual_override | float | 人工覆盖值(NULL=使用系统值) | NULL |
-| system_suggested | float | 系统建议值(基于历史偏差) | 0.82 |
-| bias_direction | float | 系统性偏差方向(正=客户习惯多报,负=少报) | +0.15 |
-| bias_correction | float | 偏差修正系数(预测量×此系数=修正后预测) | 0.85 |
-| sample_size | int | 计算所用的历史样本数 | 45 |
-| last_updated | datetime | 最后更新时间 | 2025-06-01 |
+| 字段 | 类型 | 说明 | 示例 | 来源 |
+|------|------|------|------|------|
+| confidence_id | string | 编码 | "FC001" | 系统自动 |
+| customer_id | string | 客户编码(NULL=全局) | "CUST001" | 管理员 |
+| dest_id | string | 目的地编码(NULL=所有) | "CC" | 管理员 |
+| confidence_value | float | 当前置信度(0.40-0.95) | 0.85 | 管理员初始设定，系统后续更新 |
+| source | string | 数据来源 | "manual", "system_suggested", "hybrid" | 系统自动 |
+| manual_override | float | 人工覆盖值(NULL=使用系统值) | NULL | 管理员 |
+| system_suggested | float | 系统建议值(基于历史偏差) | 0.82 | 系统计算(EWMA，≥30样本后生效) |
+| bias_direction | float | 系统性偏差方向(正=客户习惯多报,负=少报) | +0.15 | 系统计算 |
+| bias_correction | float | 偏差修正系数(预测量×此系数=修正后预测) | 0.85 | 系统计算 |
+| sample_size | int | 计算所用的历史样本数 | 45 | 系统计算 |
+| last_updated | datetime | 最后更新时间 | 2025-06-01 | 系统自动 |
 
 置信度规则：
 - 上限0.95（永远保留意外空间），下限0.40（太低失去预置意义）
@@ -187,16 +187,16 @@ Demo场景（本地配送统一1天）：
 - 分层统计：按客户×目的地×时段×订单规模分层，提升准确性
 
 #### 3.1.8 动态安全库存参数 (safety_stock_params) ★新增★
-| 字段 | 类型 | 说明 | 示例 |
-|------|------|------|------|
-| param_id | string | 编码 | "SS001" |
-| dest_id | string | 终端编码 | "CC" |
-| service_level_z | float | 服务水平系数Z | 1.65 (对应95%) |
-| demand_std_sigma | float | 需求波动标准差σ(托盘/天) | 3.0 |
-| replenishment_lead_days | float | 补货提前期L(天) | 5.0 |
-| calculated_safety_stock | float | 计算值=Z×σ×√L(托盘) | 11.07 |
-| manual_override | int | 人工覆盖值(NULL=使用计算值) | NULL |
-| last_updated | datetime | 最后更新时间 | 2025-06-01 |
+| 字段 | 类型 | 说明 | 示例 | 来源 |
+|------|------|------|------|------|
+| param_id | string | 编码 | "SS001" | 系统自动 |
+| dest_id | string | 终端编码 | "CC" | 管理员 |
+| service_level_z | float | 服务水平系数Z | 1.65 (对应95%) | 管理员 |
+| demand_std_sigma | float | 需求波动标准差σ(托盘/天) | 3.0 | 管理员初始设定，系统根据偏差历史自动更新 |
+| replenishment_lead_days | float | 补货提前期L(天) | 5.0 | 管理员初始设定，系统根据ETA偏差自动更新 |
+| calculated_safety_stock | float | 计算值=Z×σ×√L(托盘) | 11.07 | 系统计算 |
+| manual_override | int | 人工覆盖值(NULL=使用计算值) | NULL | 管理员 |
+| last_updated | datetime | 最后更新时间 | 2025-06-01 | 系统自动 |
 
 安全库存公式：安全库存 = Z × σ × √L
 - Z：服务水平系数，由管理员按客户重要性设定（90%→1.28, 95%→1.65, 99%→2.33）
@@ -205,105 +205,105 @@ Demo场景（本地配送统一1天）：
 - 补货频率越高（L越小），安全库存越低：如L从5天降到2天，安全库存减少36%
 
 #### 3.1.9 调拨路线 (transfer_routes)
-| 字段 | 类型 | 说明 | 示例 |
-|------|------|------|------|
-| from_dest | string | 起始终端 | "CC" |
-| to_dest | string | 目标终端 | "DL" |
-| transfer_days | int | 调拨时间(天) | 1 |
-| transfer_cost_per_pallet | float | 调拨成本(元/托盘) | 80 |
-| min_transfer_qty | int | 最低调拨量门槛(托盘) | 5 |
-| is_return_route | bool | 是否为退货路线(终端→上海) | false |
+| 字段 | 类型 | 说明 | 示例 | 来源 |
+|------|------|------|------|------|
+| from_dest | string | 起始终端 | "CC" | 管理员 |
+| to_dest | string | 目标终端 | "DL" | 管理员 |
+| transfer_days | int | 调拨时间(天) | 1 | 管理员 |
+| transfer_cost_per_pallet | float | 调拨成本(元/托盘) | 80 | 管理员 |
+| min_transfer_qty | int | 最低调拨量门槛(托盘) | 5 | 管理员 |
+| is_return_route | bool | 是否为退货路线(终端→上海) | false | 管理员 |
 
 #### 3.1.10 退货参数 (return_params)
-| 字段 | 类型 | 说明 | 示例 |
-|------|------|------|------|
-| dest_id | string | 终端编码 | "CC" |
-| return_freight_per_pallet | float | 退回上海运价(元/托盘) | 150 |
-| return_transit_days | int | 退货在途时间(天) | 4 |
-| return_handling_cost | float | 退货处置费用(质检+重新包装, 元/托盘) | 50 |
-| backhaul_discount | float | 回程运力折扣率(0-1) | 0.6 |
+| 字段 | 类型 | 说明 | 示例 | 来源 |
+|------|------|------|------|------|
+| dest_id | string | 终端编码 | "CC" | 管理员 |
+| return_freight_per_pallet | float | 退回上海运价(元/托盘) | 150 | 管理员 |
+| return_transit_days | int | 退货在途时间(天) | 4 | 管理员 |
+| return_handling_cost | float | 退货处置费用(质检+重新包装, 元/托盘) | 50 | 管理员 |
+| backhaul_discount | float | 回程运力折扣率(0-1) | 0.6 | 管理员 |
 
 #### 3.1.11 终端能力参数 (terminal_capabilities)
-| 字段 | 类型 | 说明 | 示例 |
-|------|------|------|------|
-| dest_id | string | 终端编码 | "CC" |
-| daily_handling_capacity | int | 每日最大装卸处理量(托盘/天) | 80 |
-| storage_capacity | int | 存储容量上限(托盘) | 500 |
-| storage_cost_unit | string | 存储计费单位 | "元/托盘/天" |
-| storage_cost_rate | float | 存储单价 | 15.0 |
-| local_delivery_cost_per_pallet | float | 本地配送费用(元/托盘) | 30 |
-| local_delivery_coverage_km | float | 本地配送覆盖半径(公里) | 50 |
+| 字段 | 类型 | 说明 | 示例 | 来源 |
+|------|------|------|------|------|
+| dest_id | string | 终端编码 | "CC" | 管理员 |
+| daily_handling_capacity | int | 每日最大装卸处理量(托盘/天) | 80 | 管理员 |
+| storage_capacity | int | 存储容量上限(托盘) | 500 | 管理员 |
+| storage_cost_unit | string | 存储计费单位 | "元/托盘/天" | 管理员 |
+| storage_cost_rate | float | 存储单价 | 15.0 | 管理员 |
+| local_delivery_cost_per_pallet | float | 本地配送费用(元/托盘) | 30 | 管理员 |
+| local_delivery_coverage_km | float | 本地配送覆盖半径(公里) | 50 | 管理员 |
 
 #### 3.1.12 货物价值与损耗参数 (cargo_value_params)
-| 字段 | 类型 | 说明 | 示例 |
-|------|------|------|------|
-| sku_id | string | SKU编码 | "SKU001" |
-| unit_value_per_pallet | float | 单托货值(元) | 20000 |
-| damage_rate_per_handling | float | 每次装卸货损概率(%) | 0.5 |
-| time_decay_rate | float | 资金占用日衰减率(货值的%/天) | 0.1 |
-| shelf_life_days | int | 保质期/时效性(天, NULL=无限) | NULL |
-| secondary_transfer_penalty | float | 二次调拨惩罚系数 | 1.3 |
+| 字段 | 类型 | 说明 | 示例 | 来源 |
+|------|------|------|------|------|
+| sku_id | string | SKU编码 | "SKU001" | 管理员 |
+| unit_value_per_pallet | float | 单托货值(元) | 20000 | 管理员 |
+| damage_rate_per_handling | float | 每次装卸货损概率(%) | 0.5 | 管理员 |
+| time_decay_rate | float | 资金占用日衰减率(货值的%/天) | 0.1 | 管理员 |
+| shelf_life_days | int | 保质期/时效性(天, NULL=无限) | NULL | 管理员 |
+| secondary_transfer_penalty | float | 二次调拨惩罚系数 | 1.3 | 管理员 |
 
 #### 3.1.13 终端需求概率 (terminal_demand_probability)
-| 字段 | 类型 | 说明 | 示例 |
-|------|------|------|------|
-| dest_id | string | 终端编码 | "CC" |
-| forecast_window_days | int | 预测窗口(天) | 14 |
-| demand_probability | float | 未来N天出现新需求的概率(0-1) | 0.65 |
-| expected_quantity | int | 预期新增需求量(托盘) | 15 |
-| last_updated | datetime | 最后更新时间 | 2025-06-01 |
-| data_source | string | 数据来源 | "historical_frequency" |
+| 字段 | 类型 | 说明 | 示例 | 来源 |
+|------|------|------|------|------|
+| dest_id | string | 终端编码 | "CC" | 管理员 |
+| forecast_window_days | int | 预测窗口(天) | 14 | 管理员(定义观察窗口长度) |
+| demand_probability | float | 未来N天出现新需求的概率(0-1) | 0.65 | 管理员初始设定，系统根据历史频率自动更新 |
+| expected_quantity | int | 预期新增需求量(托盘) | 15 | 管理员初始设定，系统根据历史频率自动更新 |
+| last_updated | datetime | 最后更新时间 | 2025-06-01 | 系统自动 |
+| data_source | string | 数据来源 | "historical_frequency" | 系统自动 |
 
 ### 3.2 业务数据表
 
 #### 3.2.1 销售预测 (sales_forecasts)
-| 字段 | 类型 | 说明 |
-|------|------|------|
-| forecast_id | string | 预测编码 |
-| customer_id | string | 客户编码 |
-| destination | string | 交付目的地 |
-| quantity_pallets | int | 预测交付数量(托盘) |
-| adjusted_quantity | int | 置信度修正后数量(= quantity × bias_correction) |
-| required_date | date | 要求交付日期 |
-| created_at | datetime | 录入时间 |
-| batch_id | string | 归属批次(NULL=未分配) |
-| confidence_at_time | float | 录入时的置信度快照 |
+| 字段 | 类型 | 说明 | 来源 |
+|------|------|------|------|
+| forecast_id | string | 预测编码 | 系统自动 |
+| customer_id | string | 客户编码 | 客户 |
+| destination | string | 交付目的地 | 客户 |
+| quantity_pallets | int | 预测交付数量(托盘) | 客户 |
+| adjusted_quantity | int | 置信度修正后数量(= quantity × bias_correction) | 系统计算 |
+| required_date | date | 要求交付日期 | 客户 |
+| created_at | datetime | 录入时间 | 系统自动 |
+| batch_id | string | 归属批次(NULL=未分配) | 系统自动(批次管理器分配) |
+| confidence_at_time | float | 录入时的置信度快照 | 系统自动(快照当前置信度) |
 
 #### 3.2.2 发货计划 (shipment_plans)
-| 字段 | 类型 | 说明 |
-|------|------|------|
-| plan_id | string | 计划编码 |
-| batch_id | string | 批次编码 |
-| destination | string | 目的地 |
-| plan_type | string | "preposition"(预置)/"responsive"(响应式)/"emergency"(紧急) |
-| planned_ship_date | date | 计划发货日期 |
-| planned_arrival_date | date | 计划到货日期(终端) |
-| quantity_pallets | int | 计划发货托盘数 |
-| preposition_quantity | int | 其中预置库存数量 |
-| safety_stock_quantity | int | 其中安全库存数量 |
-| vehicle_id | string | 分配车辆 |
-| carrier_id | string | 承运商 |
-| freight_cost | float | 运输费用 |
-| penalty_cost | float | 预计违约成本 |
-| storage_cost | float | 预计存储成本 |
-| total_cost | float | 总成本 |
-| loading_rate | float | 装载率(%) |
-| status | string | "draft","locked","dispatched","delivered" |
+| 字段 | 类型 | 说明 | 来源 |
+|------|------|------|------|
+| plan_id | string | 计划编码 | 系统自动 |
+| batch_id | string | 批次编码 | 系统自动 |
+| destination | string | 目的地 | 引擎一输出 |
+| plan_type | string | "preposition"(预置)/"responsive"(响应式)/"emergency"(紧急) | 引擎一输出 |
+| planned_ship_date | date | 计划发货日期 | 引擎一计算 |
+| planned_arrival_date | date | 计划到货日期(终端) | 引擎一计算 |
+| quantity_pallets | int | 计划发货托盘数 | 引擎一计算 |
+| preposition_quantity | int | 其中预置库存数量 | 引擎一计算 |
+| safety_stock_quantity | int | 其中安全库存数量 | 引擎一计算 |
+| vehicle_id | string | 分配车辆 | 引擎一匹配 |
+| carrier_id | string | 承运商 | 引擎一匹配 |
+| freight_cost | float | 运输费用 | 引擎一计算 |
+| penalty_cost | float | 预计违约成本 | 引擎一计算 |
+| storage_cost | float | 预计存储成本 | 引擎一计算 |
+| total_cost | float | 总成本 | 引擎一计算 |
+| loading_rate | float | 装载率(%) | 引擎一调用装载率计算器 |
+| status | string | "draft","locked","dispatched","delivered" | 系统自动流转 |
 
 #### 3.2.3 订单确认 (order_confirmations) ★修正v3.2★
-| 字段 | 类型 | 说明 |
-|------|------|------|
-| confirm_id | string | 确认编码 |
-| forecast_id | string | 关联的销售预测 |
-| confirmed_quantity | int | 确认交付数量(托盘) |
-| confirmed_at | datetime | 订单确认的提交时间(与货物到达无关) |
-| confirmed_delivery_date | date | 确认的交付日期 |
-| confirmed_by | string | 谁执行了确认:"CUST_xxx"(客户)或"SYS_USER_xxx"(系统人员) |
-| delta_quantity | int | 与原始预测差异(正=多于,负=少于) |
-| delta_vs_adjusted | int | 与修正后预测差异 |
-| status | string | "pending"(等待确认)/"customer_confirmed"(客户确认)/"arrival_alarm"(到货未确认告警)/"manual_confirmed"(人工确认)/"cancelled"(取消) |
-| alarm_triggered_at | datetime | 到货告警触发时间(货物到达时客户未确认则自动填充) |
-| confirmed_notes | string | 人工确认时的备注(系统人员记录决策依据) |
+| 字段 | 类型 | 说明 | 来源 |
+|------|------|------|------|
+| confirm_id | string | 确认编码 | 系统自动 |
+| forecast_id | string | 关联的销售预测 | 系统自动 |
+| confirmed_quantity | int | 确认交付数量(托盘) | 客户输入(场景A/B/C) 或 系统人员输入(场景D人工确认) |
+| confirmed_at | datetime | 订单确认的提交时间(与货物到达无关) | 系统自动(确认时打时间戳) |
+| confirmed_delivery_date | date | 确认的交付日期 | 客户输入 |
+| confirmed_by | string | 谁执行了确认:"CUST_xxx"(客户)或"SYS_USER_xxx"(系统人员) | 系统自动记录 |
+| delta_quantity | int | 与原始预测差异(正=多于,负=少于) | 系统计算(confirmed - forecast_qty) |
+| delta_vs_adjusted | int | 与修正后预测差异 | 系统计算(confirmed - adjusted_qty) |
+| status | string | "pending"(等待确认)/"customer_confirmed"(客户确认)/"arrival_alarm"(到货未确认告警)/"manual_confirmed"(人工确认)/"cancelled"(取消) | 系统自动流转 |
+| alarm_triggered_at | datetime | 到货告警触发时间(货物到达时客户未确认则自动填充) | 系统自动(ATA录入时触发) |
+| confirmed_notes | string | 人工确认时的备注(系统人员记录决策依据) | 系统人员输入 |
 
 **关键设计原则**：
 订单确认与货物到达是两条完全独立的时间线，无先后依赖关系。
@@ -356,58 +356,58 @@ Demo场景（本地配送统一1天）：
 2. 订单确认已完成（status="customer_confirmed"或"manual_confirmed"）
 
 #### 3.2.4 预测偏差记录 (forecast_deviation_log) ★新增★
-| 字段 | 类型 | 说明 |
-|------|------|------|
-| log_id | string | 记录编码 |
-| forecast_id | string | 关联预测 |
-| customer_id | string | 客户编码 |
-| dest_id | string | 目的地 |
-| forecast_qty | int | 原始预测量 |
-| confirmed_qty | int | 确认量 |
-| deviation_pct | float | 偏差率(%) |
-| deviation_direction | string | 偏差方向 "over"/"under"/"exact"/"cancelled" |
-| order_size_tier | string | 订单规模分层 "small"(≤5)/"medium"(6-15)/"large"(>15) |
-| period_tag | string | 时段标签 "month_start"/"month_end"/"holiday" 等 |
-| created_at | datetime | 记录时间 |
+| 字段 | 类型 | 说明 | 来源 |
+|------|------|------|------|
+| log_id | string | 记录编码 | 系统自动 |
+| forecast_id | string | 关联预测 | 系统自动 |
+| customer_id | string | 客户编码 | 系统自动(从sales_forecasts复制) |
+| dest_id | string | 目的地 | 系统自动(从sales_forecasts复制) |
+| forecast_qty | int | 原始预测量 | 系统自动(从sales_forecasts复制) |
+| confirmed_qty | int | 确认量 | 系统自动(从order_confirmations复制) |
+| deviation_pct | float | 偏差率(%) | 系统计算 |
+| deviation_direction | string | 偏差方向 "over"/"under"/"exact"/"cancelled" | 系统计算 |
+| order_size_tier | string | 订单规模分层 "small"(≤5)/"medium"(6-15)/"large"(>15) | 系统计算 |
+| period_tag | string | 时段标签 "month_start"/"month_end"/"holiday" 等 | 系统计算 |
+| created_at | datetime | 记录时间 | 系统自动(订单确认完成后自动写入) |
 
 此表持续积累数据，用于计算和更新预测置信度(3.1.7)和安全库存σ(3.1.8)。
 
 #### 3.2.5 运单 (waybills)
-| 字段 | 类型 | 说明 |
-|------|------|------|
-| waybill_id | string | 运单号 |
-| plan_id | string | 关联发货计划 |
-| actual_ship_time | datetime | 实际发货时间 |
-| eta | datetime | 预计到达时间 |
-| ata | datetime | 实际到达时间 |
-| eta_deviation_hours | float | ETA偏差(小时) |
+| 字段 | 类型 | 说明 | 来源 |
+|------|------|------|------|
+| waybill_id | string | 运单号 | 系统自动(发货计划锁定时生成) |
+| plan_id | string | 关联发货计划 | 系统自动 |
+| actual_ship_time | datetime | 实际发货时间 | 业务人员录入(货车实际出发时) |
+| eta | datetime | 预计到达时间 | 系统计算(在途天数+季节系数) |
+| ata | datetime | 实际到达时间 | 业务人员录入(货物实际到达时) ← 触发到货告警的关键字段 |
+| eta_deviation_hours | float | ETA偏差(小时) | 系统计算(ata - eta，单位小时) |
 
 #### 3.2.6 终端库存 (terminal_inventory)
-| 字段 | 类型 | 说明 |
-|------|------|------|
-| dest_id | string | 终端目的地 |
-| current_stock | int | 当前库存(托盘) |
-| safety_stock | int | 安全库存水位(托盘) |
-| prepositioned_stock | int | 预置库存(尚未有对应订单确认) |
-| confirmed_pending_delivery | int | 已确认待配送(有订单确认但未配送) |
-| surplus_stock | int | 剩余库存(确认后多出的) |
-| awaiting_confirmation | int | 已到货等待客户确认的数量 |
-| in_transit_arriving_tomorrow | int | 明天到达的在途量 |
-| storage_days | int | 已存储天数 |
+| 字段 | 类型 | 说明 | 来源 |
+|------|------|------|------|
+| dest_id | string | 终端目的地 | 系统自动 |
+| current_stock | int | 当前库存(托盘) | 系统自动更新(发货到达后) |
+| safety_stock | int | 安全库存水位(托盘) | 系统计算(来自safety_stock_params) |
+| prepositioned_stock | int | 预置库存(尚未有对应订单确认) | 系统自动更新(引擎一执行后) |
+| confirmed_pending_delivery | int | 已确认待配送(有订单确认但未配送) | 系统自动更新(订单确认后) |
+| surplus_stock | int | 剩余库存(确认后多出的) | 系统自动更新(引擎二处理后) |
+| awaiting_confirmation | int | 已到货等待客户确认的数量 | 系统自动更新(ATA录入后) |
+| in_transit_arriving_tomorrow | int | 明天到达的在途量 | 系统每日计算 |
+| storage_days | int | 已存储天数 | 系统计算 |
 
 #### 3.2.7 终端调拨计划 (transfer_plans)
-| 字段 | 类型 | 说明 |
-|------|------|------|
-| transfer_id | string | 调拨编码 |
-| from_dest | string | 来源终端 |
-| to_dest | string | 目标终端 |
-| quantity_pallets | int | 调拨数量 |
-| transfer_cost | float | 调拨费用 |
-| return_quantity | int | 退回发货点数量 |
-| return_cost | float | 退货费用 |
-| storage_cost_saved | float | 节省的存储成本 |
-| total_cost | float | 总成本 |
-| status | string | "planned","executing","completed" |
+| 字段 | 类型 | 说明 | 来源 |
+|------|------|------|------|
+| transfer_id | string | 调拨编码 | 系统自动 |
+| from_dest | string | 来源终端 | 引擎二输出 |
+| to_dest | string | 目标终端 | 引擎二输出 |
+| quantity_pallets | int | 调拨数量 | 引擎二计算 |
+| transfer_cost | float | 调拨费用 | 引擎二计算 |
+| return_quantity | int | 退回发货点数量 | 引擎二计算 |
+| return_cost | float | 退货费用 | 引擎二计算 |
+| storage_cost_saved | float | 节省的存储成本 | 引擎二计算 |
+| total_cost | float | 总成本 | 引擎二计算 |
+| status | string | "planned","executing","completed" | 系统人员确认后流转 |
 
 ---
 
