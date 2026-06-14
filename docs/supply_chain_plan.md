@@ -265,7 +265,7 @@ Demo场景（本地配送统一1天）：
 | quantity_pallets | int | 预测交付数量(托盘) | 客户 |
 | adjusted_quantity | int | 置信度修正后数量(= quantity × bias_correction) | 系统计算 |
 | required_date | date | 要求交付日期(精度为周时自动取该周周三) | 客户 |
-| date_precision | string | 日期精度 "day"(精确到天) / "week"(精确到周，存储周三) | 客户选择 |
+| date_precision | string | 日期精度，固定为 "week"（客户选年+ISO周，系统存储该周周三） | 系统固定 |
 | created_at | datetime | 录入时间 | 系统自动 |
 | batch_id | string | 归属批次(NULL=未分配) | 系统自动(批次管理器分配) |
 | confidence_at_time | float | 录入时的置信度快照 | 系统自动(快照当前置信度) |

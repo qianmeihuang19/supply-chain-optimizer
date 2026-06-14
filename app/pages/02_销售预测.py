@@ -11,9 +11,6 @@ tab1, tab2, tab3 = st.tabs(["预测录入", "预测列表", "订单确认"])
 with tab1:
     st.subheader("新增销售预测")
 
-    # Date precision selector outside the form so it can control the form layout
-    precision = st.radio("交付日期精度", ["天", "周"], horizontal=True)
-
     with st.form("new_forecast"):
         col1, col2, col3 = st.columns(3)
         with col1:
@@ -23,29 +20,23 @@ with tab1:
         with col3:
             qty = st.number_input("预测数量(托盘)", min_value=1, max_value=100, value=10)
 
-        if precision == "天":
-            due = st.date_input("要求交付日期")
-            date_precision = "day"
-        else:
-            today = date.today()
-            wcol1, wcol2 = st.columns(2)
-            with wcol1:
-                year = st.number_input("年份", min_value=2025, max_value=2030,
-                                       value=today.year, step=1)
-            with wcol2:
-                max_week = date(int(year), 12, 28).isocalendar()[1]
-                cur_week = today.isocalendar()[1]
-                week_num = st.number_input("第几周（ISO周）", min_value=1,
-                                           max_value=int(max_week),
-                                           value=int(cur_week), step=1)
-            # date.fromisocalendar(year, week, weekday): 3 = Wednesday
-            due = date.fromisocalendar(int(year), int(week_num), 3)
-            st.caption(f"实际存储日期：**{due}**（第 {week_num} 周周三）")
-            date_precision = "week"
+        today = date.today()
+        wcol1, wcol2 = st.columns(2)
+        with wcol1:
+            year = st.number_input("要求交付年份", min_value=2025, max_value=2030,
+                                   value=today.year, step=1)
+        with wcol2:
+            max_week = date(int(year), 12, 28).isocalendar()[1]
+            cur_week = today.isocalendar()[1]
+            week_num = st.number_input("要求交付周（ISO周）", min_value=1,
+                                       max_value=int(max_week),
+                                       value=int(cur_week), step=1)
+        due = date.fromisocalendar(int(year), int(week_num), 3)
+        st.caption(f"实际存储日期：**{due}**（第 {week_num} 周周三）")
 
         submitted = st.form_submit_button("提交预测")
         if submitted:
-            st.success(f"预测已提交: {qty}托盘 → {dest}, 交付日 {due}（精度：{precision}）")
+            st.success(f"预测已提交: {qty}托盘 → {dest}, 第 {week_num} 周（{due}）")
 
 with tab2:
     st.subheader("已提交预测列表")
