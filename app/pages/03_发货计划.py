@@ -17,7 +17,6 @@ with tab1:
         "预测量": [15, 8, 12, 20, 10, 6],
         "修正后": [13, 7, 10, 16, 9, 5],
         "要求日期": ["2025-05-01"] * 6,
-        "预置深度(天)": [2, 2, 1, 1, 1, 1],
     }, use_container_width=True, hide_index=True)
 
     if st.button("🚀 运行优化", type="primary"):
