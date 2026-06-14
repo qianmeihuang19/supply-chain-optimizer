@@ -200,7 +200,6 @@ class SalesForecast(Base):
     quantity_pallets = Column(Integer, nullable=False)
     adjusted_quantity = Column(Integer, nullable=False)
     required_date = Column(Date, nullable=False)
-    date_precision = Column(String(10), nullable=False, default="week")  # "week" → Wednesday of the selected ISO week
     created_at = Column(DateTime, nullable=False, default=datetime.now)
     batch_id = Column(String(20), nullable=True)
     confidence_at_time = Column(Float, nullable=True)
