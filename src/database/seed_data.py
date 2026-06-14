@@ -345,8 +345,9 @@ def seed_sales_forecasts(session: Session) -> list[dict]:
                 customer = py_rng.choice(CUSTOMER_IDS)
                 qty = int(rng.poisson(10)) + 3   # mean ~10, offset +3 => ~3-20
                 qty = max(3, min(qty, 20))
-                # due date: +7 to +14 days
-                due = current_date + timedelta(days=int(rng.integers(7, 15)))
+                # due date: +7 to +14 days, snapped to Monday (week start)
+                raw_due = current_date + timedelta(days=int(rng.integers(7, 15)))
+                due = raw_due + timedelta(days=(7 - raw_due.weekday()) % 7)
                 created = datetime.combine(current_date, datetime.min.time().replace(
                     hour=8, minute=int(rng.integers(0, 60))
                 ))
