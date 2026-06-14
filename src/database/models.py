@@ -48,6 +48,15 @@ class DeliveryTarget(Base):
     priority = Column(Integer, nullable=False, default=10)
 
 
+class Carrier(Base):
+    __tablename__ = "carriers"
+
+    carrier_id = Column(String(20), primary_key=True)
+    carrier_name = Column(String(50), nullable=False)
+    carrier_type = Column(String(20), nullable=False, default="公路")   # 公路 / 水路 / 铁路
+    contact = Column(String(50), nullable=True)
+
+
 class Vehicle(Base):
     __tablename__ = "vehicles"
 
@@ -197,6 +206,7 @@ class SalesForecast(Base):
     forecast_id = Column(String(20), primary_key=True)
     customer_id = Column(String(20), nullable=False)
     destination = Column(String(10), ForeignKey("destinations.dest_id"), nullable=False)
+    sku_id = Column(String(20), ForeignKey("cargo_value_params.sku_id"), nullable=True)
     quantity_pallets = Column(Integer, nullable=False)
     adjusted_quantity = Column(Integer, nullable=False)
     required_date = Column(Date, nullable=False)
@@ -211,14 +221,16 @@ class ShipmentPlan(Base):
     plan_id = Column(String(20), primary_key=True)
     batch_id = Column(String(20), nullable=False)
     destination = Column(String(10), ForeignKey("destinations.dest_id"), nullable=False)
+    sku_id = Column(String(20), ForeignKey("cargo_value_params.sku_id"), nullable=True)
     plan_type = Column(String(20), nullable=False)       # preposition / responsive / emergency
+    transport_mode = Column(String(30), nullable=False, default="公路/车辆")  # 公路/车辆 / 水路 / 铁路
     planned_ship_date = Column(Date, nullable=False)
     planned_arrival_date = Column(Date, nullable=False)
     quantity_pallets = Column(Integer, nullable=False)
     preposition_quantity = Column(Integer, nullable=False, default=0)
     safety_stock_quantity = Column(Integer, nullable=False, default=0)
-    vehicle_id = Column(String(20), ForeignKey("vehicles.vehicle_id"), nullable=True)
-    carrier_id = Column(String(20), nullable=True)
+    resource_id = Column(String(20), nullable=True)      # vehicle / vessel / wagon ID
+    carrier_id = Column(String(20), ForeignKey("carriers.carrier_id"), nullable=True)
     freight_cost = Column(Float, nullable=False, default=0)
     penalty_cost = Column(Float, nullable=False, default=0)
     storage_cost = Column(Float, nullable=False, default=0)
@@ -232,6 +244,7 @@ class OrderConfirmation(Base):
 
     confirm_id = Column(String(20), primary_key=True)
     forecast_id = Column(String(20), ForeignKey("sales_forecasts.forecast_id"), nullable=False)
+    sku_id = Column(String(20), ForeignKey("cargo_value_params.sku_id"), nullable=True)
     confirmed_quantity = Column(Integer, nullable=True)
     confirmed_at = Column(DateTime, nullable=True)
     confirmed_delivery_date = Column(Date, nullable=True)

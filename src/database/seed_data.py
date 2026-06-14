@@ -18,6 +18,7 @@ from sqlalchemy.orm import Session
 
 from .models import (
     CargoValueParam,
+    Carrier,
     DeliveryTarget,
     Destination,
     ForecastConfidence,
@@ -80,6 +81,21 @@ def _daily_order_count(d: date) -> int:
 # =============================================================================
 # Seed functions for each table
 # =============================================================================
+
+
+def seed_carriers(session: Session):
+    data = [
+        ("CR001", "顺丰货运", "公路", "400-811-1111"),
+        ("CR002", "德邦物流", "公路", "400-830-6060"),
+    ]
+    for carrier_id, name, ctype, contact in data:
+        session.add(Carrier(
+            carrier_id=carrier_id,
+            carrier_name=name,
+            carrier_type=ctype,
+            contact=contact,
+        ))
+    session.commit()
 
 
 def seed_destinations(session: Session):
@@ -367,6 +383,7 @@ def seed_sales_forecasts(session: Session) -> list[dict]:
                     forecast_id=_id("F", seq),
                     customer_id=customer,
                     destination=dest,
+                    sku_id=SKU_ID,
                     quantity_pallets=qty,
                     adjusted_quantity=adjusted,
                     required_date=due,
@@ -451,6 +468,7 @@ def seed_order_confirmations(session: Session, forecasts: list[dict]):
         oc = dict(
             confirm_id=_id("OC", seq),
             forecast_id=rec["forecast_id"],
+            sku_id=rec.get("sku_id", SKU_ID),
             confirmed_quantity=confirmed_qty,
             confirmed_at=confirmed_at,
             confirmed_delivery_date=rec["required_date"],
@@ -569,7 +587,8 @@ def seed_all(session: Session, simulate: bool = True) -> dict:
         session: SQLAlchemy session.
         simulate: If True, also generate business data (forecasts, confirmations, etc.).
     """
-    # Base data (13 tables)
+    # Base data (14 tables)
+    seed_carriers(session)
     seed_destinations(session)
     seed_delivery_targets(session)
     seed_vehicles(session)
@@ -586,6 +605,7 @@ def seed_all(session: Session, simulate: bool = True) -> dict:
     seed_loading_config(session)
 
     summary = {
+        "carriers": 2,
         "destinations": 3,
         "delivery_targets": 5,
         "vehicles": 20,
