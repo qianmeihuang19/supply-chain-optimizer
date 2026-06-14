@@ -75,6 +75,7 @@ with tab2:
     st.subheader("优化结果 — 推荐方案")
     st.dataframe({
         "计划编号": ["PLN0001", "PLN0002", "PLN0003"],
+        "客户": ["CUST001", "CUST002", "CUST003"],
         "目的地": ["CC", "DL", "TJ"],
         "SKU": ["SKU001", "SKU001", "SKU001"],
         "类型": ["预置", "预置", "预置"],

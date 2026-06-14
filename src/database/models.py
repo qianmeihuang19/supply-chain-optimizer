@@ -220,6 +220,7 @@ class ShipmentPlan(Base):
 
     plan_id = Column(String(20), primary_key=True)
     batch_id = Column(String(20), nullable=False)
+    customer_id = Column(String(20), nullable=True)
     destination = Column(String(10), ForeignKey("destinations.dest_id"), nullable=False)
     sku_id = Column(String(20), ForeignKey("cargo_value_params.sku_id"), nullable=True)
     plan_type = Column(String(20), nullable=False)       # preposition / responsive / emergency
