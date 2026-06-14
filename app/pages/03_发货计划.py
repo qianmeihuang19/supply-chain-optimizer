@@ -7,8 +7,8 @@ st.set_page_config(page_title="发货计划工作台", page_icon="📦", layout=
 st.title("📦 发货计划工作台")
 st.caption("引擎一: 发货计划MIP优化")
 
-tab1, tab2, tab3, tab4 = st.tabs([
-    "待优化订单池", "优化结果", "x值敏感性分析", "装载方案",
+tab1, tab2, tab3 = st.tabs([
+    "待优化订单池", "优化结果", "装载方案",
 ])
 
 # Mock forecast pool — more rows to make selection meaningful
@@ -86,13 +86,6 @@ with tab2:
     }, use_container_width=True, hide_index=True)
 
 with tab3:
-    st.subheader("x值敏感性分析")
-    st.caption("拖动x值查看总成本变化")
-    x_val = st.slider("目标交付天数 x", min_value=1, max_value=7, value=2)
-    st.info(f"x={x_val} 时，预置提前量: 长春={max(0,4-(x_val-1))}天, 大连={max(0,3-(x_val-1))}天, 天津={max(0,2-(x_val-1))}天")
-    st.line_chart({"x值": list(range(1, 8)), "总成本(万元)": [6.5, 4.6, 3.8, 3.5, 3.3, 3.2, 3.1]})
-
-with tab4:
     st.subheader("装载方案可视化")
     st.info("车辆装载率计算结果")
     st.dataframe({
