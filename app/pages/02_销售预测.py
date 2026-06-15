@@ -41,7 +41,7 @@ with tab1:
 
         submitted = st.form_submit_button("提交预测")
         if submitted:
-            st.success(f"预测已提交: {sku} {qty}托盘 → {dest_label}, 第 {week_num} 周")
+            st.success(f"预测已提交: {sku} {qty}托盘 → {dest_label}, 第 {week_num} 周（要求日期 {due}，周一）")
 
 with tab2:
     st.subheader("已提交预测列表")

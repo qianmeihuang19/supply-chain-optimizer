@@ -1,4 +1,4 @@
-"""SQLAlchemy ORM models — 20 tables for supply chain optimizer v3.2."""
+"""SQLAlchemy ORM models — 25 tables for supply chain optimizer v3.2."""
 from __future__ import annotations
 
 from datetime import date, datetime
