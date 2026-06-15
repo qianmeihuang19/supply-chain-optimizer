@@ -94,6 +94,28 @@ Demo场景（本地配送统一1天）：
 
 ### 3.1 基础数据表
 
+#### 3.1.0 货主（托运人）(shippers)
+| 字段 | 类型 | 说明 | 示例 | 来源 |
+|------|------|------|------|------|
+| shipper_id | string | 货主编码 | "SH001" | 管理员 |
+| shipper_name | string | 货主名称 | "上海远程贸易有限公司" | 管理员 |
+| contact | string | 联系方式 | "021-6888-0001" | 管理员 |
+
+#### 3.1.0b 客户（收货人）(customers)
+| 字段 | 类型 | 说明 | 示例 | 来源 |
+|------|------|------|------|------|
+| customer_id | string | 客户编码 | "CUST001" | 管理员 |
+| customer_name | string | 客户名称 | "长春华润商贸有限公司" | 管理员 |
+| contact | string | 联系方式 | "0431-8800-0001" | 管理员 |
+
+#### 3.1.0c 承运商（服务商）(carriers)
+| 字段 | 类型 | 说明 | 示例 | 来源 |
+|------|------|------|------|------|
+| carrier_id | string | 承运商编码 | "CR001" | 管理员 |
+| carrier_name | string | 承运商名称 | "顺丰货运" | 管理员 |
+| carrier_type | string | 运输方式 "公路"/"水路"/"铁路" | "公路" | 管理员 |
+| contact | string | 联系方式 | "400-811-1111" | 管理员 |
+
 #### 3.1.1 目的地信息 (destinations)
 | 字段 | 类型 | 说明 | 示例 | 来源 |
 |------|------|------|------|------|
@@ -260,29 +282,34 @@ Demo场景（本地配送统一1天）：
 | 字段 | 类型 | 说明 | 来源 |
 |------|------|------|------|
 | forecast_id | string | 预测编码 | 系统自动 |
-| customer_id | string | 客户编码 | 客户 |
+| shipper_id | string | 货主编码(FK→shippers) | 客户/管理员 |
+| customer_id | string | 客户编码(FK→customers) | 客户 |
 | destination | string | 交付目的地 | 客户 |
+| sku_id | string | 货物SKU(FK→cargo_value_params) | 客户 |
 | quantity_pallets | int | 预测交付数量(托盘) | 客户 |
 | adjusted_quantity | int | 置信度修正后数量(= quantity × bias_correction) | 系统计算 |
-| required_date | date | 要求交付日期(精度为周时自动取该周周三) | 客户 |
+| required_date | date | 要求交付日期，以ISO周为颗粒度，存储为该周周一 | 客户 |
 | created_at | datetime | 录入时间 | 系统自动 |
 | batch_id | string | 归属批次(NULL=未分配) | 系统自动(批次管理器分配) |
 | confidence_at_time | float | 录入时的置信度快照 | 系统自动(快照当前置信度) |
 
 #### 3.2.2 发货计划 (shipment_plans)
+计划层面代表一次运输（一辆车/一条航次），货主和客户信息在明细层 shipment_plan_items 管理。
+
 | 字段 | 类型 | 说明 | 来源 |
 |------|------|------|------|
 | plan_id | string | 计划编码 | 系统自动 |
 | batch_id | string | 批次编码 | 系统自动 |
 | destination | string | 目的地 | 引擎一输出 |
 | plan_type | string | "preposition"(预置)/"responsive"(响应式)/"emergency"(紧急) | 引擎一输出 |
+| transport_mode | string | 运输方式 "公路/车辆"/"水路"/"铁路" | 引擎一匹配 |
 | planned_ship_date | date | 计划发货日期 | 引擎一计算 |
 | planned_arrival_date | date | 计划到货日期(终端) | 引擎一计算 |
-| quantity_pallets | int | 计划发货托盘数 | 引擎一计算 |
+| quantity_pallets | int | 计划发货托盘数(含所有货主) | 引擎一计算 |
 | preposition_quantity | int | 其中预置库存数量 | 引擎一计算 |
 | safety_stock_quantity | int | 其中安全库存数量 | 引擎一计算 |
-| vehicle_id | string | 分配车辆 | 引擎一匹配 |
-| carrier_id | string | 承运商 | 引擎一匹配 |
+| resource_id | string | 资源编号(车辆/船只/车厢，与运输方式对应) | 引擎一匹配 |
+| carrier_id | string | 承运商编码(FK→carriers) | 引擎一匹配 |
 | freight_cost | float | 运输费用 | 引擎一计算 |
 | penalty_cost | float | 预计违约成本 | 引擎一计算 |
 | storage_cost | float | 预计存储成本 | 引擎一计算 |
@@ -290,11 +317,26 @@ Demo场景（本地配送统一1天）：
 | loading_rate | float | 装载率(%) | 引擎一调用装载率计算器 |
 | status | string | "draft","locked","dispatched","delivered" | 系统自动流转 |
 
+#### 3.2.2b 发货计划明细 (shipment_plan_items)
+每条记录代表一个货主+客户在同一计划（运输）中的货物份额，支持拼车/混载场景。
+
+| 字段 | 类型 | 说明 | 来源 |
+|------|------|------|------|
+| item_id | string | 明细编码 | 系统自动 |
+| plan_id | string | 关联发货计划(FK→shipment_plans) | 系统自动 |
+| shipper_id | string | 货主编码(FK→shippers) | 引擎一输出 |
+| customer_id | string | 收货人编码(FK→customers) | 引擎一输出 |
+| sku_id | string | 货物SKU(FK→cargo_value_params) | 引擎一输出 |
+| quantity_pallets | int | 该货主+客户的托盘数 | 引擎一计算 |
+
 #### 3.2.3 订单确认 (order_confirmations) ★修正v3.2★
 | 字段 | 类型 | 说明 | 来源 |
 |------|------|------|------|
 | confirm_id | string | 确认编码 | 系统自动 |
-| forecast_id | string | 关联的销售预测 | 系统自动 |
+| forecast_id | string | 关联的销售预测(FK→sales_forecasts) | 系统自动 |
+| shipper_id | string | 货主编码(FK→shippers，从预测复制) | 系统自动 |
+| customer_id | string | 客户编码(FK→customers，从预测复制) | 系统自动 |
+| sku_id | string | 货物SKU(FK→cargo_value_params，从预测复制) | 系统自动 |
 | confirmed_quantity | int | 确认交付数量(托盘) | 客户输入(场景A/B/C) 或 系统人员输入(场景D人工确认) |
 | confirmed_at | datetime | 订单确认的提交时间(与货物到达无关) | 系统自动(确认时打时间戳) |
 | confirmed_delivery_date | date | 确认的交付日期 | 客户输入 |

@@ -60,7 +60,7 @@ supply-chain-optimizer/
 │   ├── __init__.py
 │   ├── database/
 │   │   ├── __init__.py
-│   │   ├── models.py                 # SQLAlchemy ORM (20张表)
+│   │   ├── models.py                 # SQLAlchemy ORM (25张表)
 │   │   ├── init_db.py
 │   │   └── seed_data.py
 │   ├── engines/
@@ -109,18 +109,21 @@ supply-chain-optimizer/
     └── test_cost_calculator.py
 ```
 
-## 数据库表一览 (20张)
+## 数据库表一览 (25张)
 
 详细字段见 docs/supply_chain_plan.md 第三章。
 
-基础数据(管理员维护，13张):
+基础数据(管理员维护，16张):
+- shippers: 货主/托运人(编码/名称/联系方式)
+- customers: 客户/收货人(编码/名称/联系方式)
+- carriers: 承运商/服务商(编码/名称/运输方式/联系方式)
 - destinations: 目的地(编码/名称/在途天数正常+冬季/本地配送时间)
 - delivery_targets: 交付时效目标(客户×目的地的x值,优先级匹配)
 - vehicles: 车辆资源(车型/限重/内部尺寸/可用时间窗/状态)
 - freight_rates: 运价(承运商/计价模式/单价/有效期/是否加急/附加费率)
 - packaging_specs: 包装规格(托盘尺寸/重量/叠放层数/间隙)
 - penalty_rules: 违约规则(线性rate/阶梯tier_rules JSON)
-- forecast_confidence: 预测置信度(人工值/EWMA建议值/偏差方向/修正系数/样本数)
+- forecast_confidence: 预测置信度(人工值/EWMA建议值/偏差方向float/修正系数/样本数)
 - safety_stock_params: 安全库存参数(Z/σ/L/计算值Z×σ×√L)
 - transfer_routes: 调拨路线(6路线运价/时间/最低量)
 - return_params: 退货参数(运价/处置费/回程运费折扣率)
@@ -128,14 +131,16 @@ supply-chain-optimizer/
 - cargo_value_params: 货值损耗(货值/货损率0.5%/衰减率0.1%天/保质期/二次惩罚1.3x)
 - terminal_demand_probability: 需求概率(预测窗口/概率/预期量)
 
-业务数据(7张):
-- sales_forecasts: 销售预测(客户/目的地/数量/修正后数量/要求日期/置信度快照)
-- shipment_plans: 发货计划(批次/类型preposition|responsive|emergency/车辆/各项费用/状态)
-- order_confirmations: 订单确认(confirmed_at/confirmed_by/status含arrival_alarm/alarm_triggered_at/confirmed_notes)
+业务数据(9张):
+- sales_forecasts: 销售预测(货主/客户/SKU/目的地/数量/修正后数量/要求周周一/置信度快照)
+- shipment_plans: 发货计划(批次/类型/运输方式/resource_id/carrier_id/各项费用/状态)，货主客户在items层
+- shipment_plan_items: 发货计划明细(plan_id/货主/客户/SKU/托盘数)，支持拼车多货主
+- order_confirmations: 订单确认(货主/客户/SKU/confirmed_at/status含arrival_alarm/alarm_triggered_at)
 - forecast_deviation_log: 预测偏差记录(偏差率/方向over|under|exact|cancelled/规模分层/时段标签)
 - waybills: 运单(发货时间/ETA/ATA/偏差小时)
 - terminal_inventory: 终端库存(预置/已确认待配送/等待确认/剩余/安全库存)
 - transfer_plans: 调拨计划(来源/目标/调拨量/退货量/存储量/各项成本/状态)
+- loading_config: 装载配置(车型/托盘型/理论最大值/管理员确认值)
 
 ## 引擎一：发货计划优化
 
@@ -201,7 +206,7 @@ ETA偏差: 正常N(0,4h), 冬季N(6h,8h), 5%概率额外延迟12-48h
 
 ## 开发阶段
 
-Phase 0: 基础设施 — 项目结构/建表(20张)/模拟数据/Streamlit框架
+Phase 0: 基础设施 — 项目结构/建表(25张)/模拟数据/Streamlit框架
 Phase 1: 装载率 — 托盘装箱(间隙/叠放/限重/限高/多车型)
 Phase 2: 引擎一★ — 置信度修正+安全库存+预置深度+MIP+滚动补货+x敏感性分析
 Phase 3: 资源锁定 — 运力匹配(含紧急通道)/运单/锁定
