@@ -88,14 +88,14 @@ supply-chain-optimizer/
 ├── app/
 │   ├── app.py
 │   └── pages/
-│       ├── 01_dashboard.py           # KPI仪表板
-│       ├── 02_sales_forecast.py      # 销售预测管理
-│       ├── 03_shipment_plan.py       # 发货计划工作台
-│       ├── 04_waybill_tracking.py    # 运单跟踪
-│       ├── 05_order_alarm.py         # 订单确认告警管理
-│       ├── 06_terminal_transfer.py   # 终端库存与调拨
-│       ├── 07_admin.py               # 系统管理(x/置信度/安全库存配置)
-│       └── 08_analytics.py           # 分析报表(预测准确率趋势)
+│       ├── 01_仪表板.py              # KPI仪表板
+│       ├── 02_销售预测.py            # 销售预测管理
+│       ├── 03_发货计划.py            # 发货计划工作台
+│       ├── 04_运单跟踪.py            # 运单跟踪
+│       ├── 05_订单告警.py            # 订单确认告警管理
+│       ├── 06_终端调拨.py            # 终端库存与调拨
+│       ├── 07_系统管理.py            # 系统管理(置信度/安全库存/装载配置/车辆/路线)
+│       └── 08_分析报表.py            # 分析报表(预测准确率趋势)
 ├── data/
 │   ├── templates/
 │   └── sample/
@@ -113,7 +113,7 @@ supply-chain-optimizer/
 
 详细字段见 docs/supply_chain_plan.md 第三章。
 
-基础数据(管理员维护，16张):
+基础数据(管理员维护，17张):
 - shippers: 货主/托运人(编码/名称/联系方式)
 - customers: 客户/收货人(编码/名称/联系方式)
 - carriers: 承运商/服务商(编码/名称/运输方式/联系方式)
@@ -130,8 +130,9 @@ supply-chain-optimizer/
 - terminal_capabilities: 终端能力(装卸量/存储容量/存储单价/本地配送费用)
 - cargo_value_params: 货值损耗(货值/货损率0.5%/衰减率0.1%天/保质期/二次惩罚1.3x)
 - terminal_demand_probability: 需求概率(预测窗口/概率/预期量)
+- loading_config: 装载配置(车型/托盘型/理论最大值/管理员确认值)
 
-业务数据(9张):
+业务数据(8张):
 - sales_forecasts: 销售预测(货主/客户/SKU/目的地/数量/修正后数量/要求周周一/置信度快照)
 - shipment_plans: 发货计划(批次/类型/运输方式/resource_id/carrier_id/各项费用/状态)，货主客户在items层
 - shipment_plan_items: 发货计划明细(plan_id/货主/客户/SKU/托盘数)，支持拼车多货主
@@ -140,7 +141,6 @@ supply-chain-optimizer/
 - waybills: 运单(发货时间/ETA/ATA/偏差小时)
 - terminal_inventory: 终端库存(预置/已确认待配送/等待确认/剩余/安全库存)
 - transfer_plans: 调拨计划(来源/目标/调拨量/退货量/存储量/各项成本/状态)
-- loading_config: 装载配置(车型/托盘型/理论最大值/管理员确认值)
 
 ## 引擎一：发货计划优化
 

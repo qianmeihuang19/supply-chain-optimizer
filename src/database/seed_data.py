@@ -1,4 +1,4 @@
-"""Seed realistic demo data for all 20 tables.
+"""Seed realistic demo data for all 25 tables.
 
 Rules from supply_chain_plan.md section 8:
 - Forecasts: 3 destinations x 5-10 orders/day, 3-20 pallets (Poisson), due +7-14 days
@@ -33,15 +33,11 @@ from .models import (
     SafetyStockParam,
     SalesForecast,
     Shipper,
-    ShipmentPlan,
-    ShipmentPlanItem,
     TerminalCapability,
     TerminalDemandProbability,
     TerminalInventory,
-    TransferPlan,
     TransferRoute,
     Vehicle,
-    Waybill,
 )
 
 # --- Config ---
@@ -620,7 +616,7 @@ def seed_all(session: Session, simulate: bool = True) -> dict:
         session: SQLAlchemy session.
         simulate: If True, also generate business data (forecasts, confirmations, etc.).
     """
-    # Base data (16 tables)
+    # Base data (17 tables)
     seed_shippers(session)
     seed_customers(session)
     seed_carriers(session)
