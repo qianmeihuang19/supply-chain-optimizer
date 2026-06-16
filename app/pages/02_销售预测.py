@@ -233,9 +233,73 @@ def parse_and_validate_order(df_raw: pd.DataFrame):
     return _validate(df_raw, ORDER_COLUMNS)
 
 
+# Columns that together define a forecast's identity for duplicate detection
+FORECAST_STORE_COLS = ["shipper_id", "customer_id", "destination",
+                       "sku_id", "quantity_pallets", "required_date"]
+
+
+def _row_key(row) -> tuple:
+    """Normalized identity tuple for a forecast row (NaN/None → '')."""
+    out = []
+    for c in FORECAST_STORE_COLS:
+        v = row[c]
+        if v is None or (isinstance(v, float) and pd.isna(v)):
+            v = ""
+        out.append(v)
+    return tuple(out)
+
+
+def split_duplicates(existing: pd.DataFrame, incoming: pd.DataFrame):
+    """Split ``incoming`` into ``(to_add, duplicates)``.
+
+    A row is a duplicate if it matches an existing row OR an earlier
+    incoming row on all FORECAST_STORE_COLS. Pure / testable.
+    """
+    seen = set()
+    if existing is not None and len(existing):
+        for _, r in existing.iterrows():
+            seen.add(_row_key(r))
+
+    add_rows, dup_rows = [], []
+    for _, r in incoming.iterrows():
+        k = _row_key(r)
+        if k in seen:
+            dup_rows.append(r)
+        else:
+            seen.add(k)
+            add_rows.append(r)
+
+    empty = incoming.iloc[0:0]
+    to_add = pd.DataFrame(add_rows, columns=incoming.columns) if add_rows else empty
+    dups = pd.DataFrame(dup_rows, columns=incoming.columns) if dup_rows else empty
+    return to_add, dups
+
+
+def _describe_forecast(row) -> str:
+    """One-line human-readable description of a forecast row (for warnings)."""
+    ship = row.get("shipper_id") if hasattr(row, "get") else row["shipper_id"]
+    ship = "" if (ship is None or (isinstance(ship, float) and pd.isna(ship))) else ship
+    return (f"货主 {ship or '—'} / 客户 {row['customer_id']} / 目的地 {row['destination']} "
+            f"/ {row['sku_id']} / {int(row['quantity_pallets'])}托盘 / {row['required_date']}")
+
+
 st.set_page_config(page_title="销售预测管理", page_icon="📈", layout="wide")
 st.title("📈 销售预测管理")
 st.caption("预测录入、置信度修正、订单确认")
+
+# In-session forecast store (no DB yet); seeded with a few demo rows
+if "forecasts" not in st.session_state:
+    st.session_state.forecasts = pd.DataFrame(
+        [
+            {"shipper_id": "SH001", "customer_id": "CUST001", "destination": "CC",
+             "sku_id": "SKU001", "quantity_pallets": 15, "required_date": date(2026, 4, 27)},
+            {"shipper_id": "SH001", "customer_id": "CUST002", "destination": "DL",
+             "sku_id": "SKU001", "quantity_pallets": 8, "required_date": date(2026, 4, 27)},
+            {"shipper_id": "SH002", "customer_id": "CUST003", "destination": "TJ",
+             "sku_id": "SKU001", "quantity_pallets": 20, "required_date": date(2026, 5, 4)},
+        ],
+        columns=FORECAST_STORE_COLS,
+    )
 
 tab1, tab2, tab3 = st.tabs(["预测录入", "预测列表", "订单确认"])
 
@@ -268,7 +332,26 @@ with tab1:
 
         submitted = st.form_submit_button("提交预测")
         if submitted:
-            st.success(f"预测已提交: {sku} {qty}托盘 → {dest_label}, 第 {week_num} 周（要求日期 {due}，周一）")
+            new_row = pd.DataFrame([{
+                "shipper_id": "",
+                "customer_id": customer,
+                "destination": DEST_OPTIONS[dest_label],
+                "sku_id": sku,
+                "quantity_pallets": int(qty),
+                "required_date": due,
+            }], columns=FORECAST_STORE_COLS)
+            to_add, dups = split_duplicates(st.session_state.forecasts, new_row)
+            if len(dups):
+                st.warning(
+                    "⚠️ 该预测信息与已有记录完全重复，未重复添加："
+                    f"{_describe_forecast(new_row.iloc[0])}"
+                )
+            else:
+                st.session_state.forecasts = pd.concat(
+                    [st.session_state.forecasts, to_add], ignore_index=True)
+                st.success(
+                    f"预测已提交: {sku} {qty}托盘 → {dest_label}, "
+                    f"第 {week_num} 周（要求日期 {due}，周一）")
 
     st.divider()
     st.markdown("#### 批量导入")
@@ -321,23 +404,39 @@ with tab1:
             )
 
             if st.button("✅ 确认提交全部预测", type="primary"):
-                st.success(f"已提交 {len(df)} 条预测（Phase 2 接入引擎后将写入数据库）")
+                to_add, dups = split_duplicates(
+                    st.session_state.forecasts, df[FORECAST_STORE_COLS])
+                st.session_state.forecasts = pd.concat(
+                    [st.session_state.forecasts, to_add], ignore_index=True)
+                if len(dups):
+                    st.warning(f"⚠️ 以下 {len(dups)} 条预测信息完全重复，已自动跳过：")
+                    for _, r in dups.iterrows():
+                        st.markdown(f"- {_describe_forecast(r)}")
+                st.success(
+                    f"已提交 {len(to_add)} 条预测"
+                    f"（重复 {len(dups)} 条已跳过；Phase 2 接入引擎后将写入数据库）")
 
 with tab2:
     st.subheader("已提交预测列表")
-    st.dataframe(
-        {
-            "预测编号": ["F0001", "F0002", "F0003"],
-            "客户": ["CUST001", "CUST002", "CUST003"],
-            "目的地": ["CC", "DL", "TJ"],
-            "SKU": ["SKU001", "SKU001", "SKU001"],
-            "预测量": [15, 8, 20],
-            "修正后": [13, 8, 17],
-            "置信度": [0.85, 0.80, 0.82],
-            "要求日期": ["2025-04-28", "2025-04-28", "2025-05-05"],
-        },
-        use_container_width=True, hide_index=True,
-    )
+    st.caption("完全重复的预测信息不会重复显示")
+
+    fc = st.session_state.forecasts.drop_duplicates(
+        subset=FORECAST_STORE_COLS).reset_index(drop=True)
+
+    if fc.empty:
+        st.info("暂无已提交预测")
+    else:
+        st.dataframe(
+            fc.rename(columns={
+                "shipper_id": "货主",
+                "customer_id": "客户",
+                "destination": "目的地",
+                "sku_id": "SKU",
+                "quantity_pallets": "预测量",
+                "required_date": "要求日期",
+            }),
+            use_container_width=True, hide_index=True,
+        )
 
 with tab3:
     st.subheader("订单确认")

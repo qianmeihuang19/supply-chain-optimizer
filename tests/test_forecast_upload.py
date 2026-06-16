@@ -17,6 +17,8 @@ make_template = forecast_page._make_excel_template
 parse_and_validate = forecast_page.parse_and_validate
 make_order_template = forecast_page._make_order_template
 parse_and_validate_order = forecast_page.parse_and_validate_order
+split_duplicates = forecast_page.split_duplicates
+STORE_COLS = forecast_page.FORECAST_STORE_COLS
 
 HEADERS = ["货主编号*", "客户编号*", "目的地代码*",
            "SKU编号*", "预测数量（托盘）*", "要求交付日期*"]
@@ -86,3 +88,29 @@ def test_order_invalid_enum_is_rejected():
     df, errors = parse_and_validate_order(
         _odf(("SH001", "CUST001", "XX", "SKU001", 10, "2026-06-23", "PO-1")))
     assert df is None and errors
+
+
+# ── Duplicate detection ───────────────────────────────────────────────────
+def _store(*rows):
+    """Build a forecast store DataFrame; each row a 6-tuple in STORE_COLS order."""
+    return pd.DataFrame(rows, columns=STORE_COLS)
+
+
+R1 = ("SH001", "CUST001", "CC", "SKU001", 15, date(2026, 4, 27))
+R2 = ("SH001", "CUST002", "DL", "SKU001", 8, date(2026, 4, 27))
+
+
+def test_duplicate_against_existing_is_flagged():
+    existing = _store(R1)
+    to_add, dups = split_duplicates(existing, _store(R1))
+    assert len(to_add) == 0 and len(dups) == 1
+
+
+def test_distinct_rows_all_added():
+    to_add, dups = split_duplicates(_store(R1), _store(R2))
+    assert len(to_add) == 1 and len(dups) == 0
+
+
+def test_duplicate_within_batch_is_flagged():
+    to_add, dups = split_duplicates(_store(), _store(R1, R1, R2))
+    assert len(to_add) == 2 and len(dups) == 1
