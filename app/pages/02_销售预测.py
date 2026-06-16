@@ -343,7 +343,7 @@ with tab1:
             to_add, dups = split_duplicates(st.session_state.forecasts, new_row)
             if len(dups):
                 st.warning(
-                    "⚠️ 该预测信息与已有记录完全重复，未重复添加："
+                    "⚠️ 该预测信息与已有记录完全重复："
                     f"{_describe_forecast(new_row.iloc[0])}"
                 )
             else:
