@@ -15,9 +15,13 @@ _spec.loader.exec_module(forecast_page)
 
 make_template = forecast_page._make_excel_template
 parse_and_validate = forecast_page.parse_and_validate
+make_order_template = forecast_page._make_order_template
+parse_and_validate_order = forecast_page.parse_and_validate_order
 
 HEADERS = ["货主编号*", "客户编号*", "目的地代码*",
            "SKU编号*", "预测数量（托盘）*", "要求交付日期*"]
+ORDER_HEADERS = ["货主编号*", "客户编号*", "目的地代码*", "SKU编号*",
+                 "确认数量（托盘）*", "确认交付日期*", "客户订单号"]
 
 
 def _df(*rows):
@@ -25,7 +29,13 @@ def _df(*rows):
     return pd.DataFrame(rows, columns=HEADERS)
 
 
+def _odf(*rows):
+    """Build a raw order-confirmation DataFrame; each row a 7-tuple."""
+    return pd.DataFrame(rows, columns=ORDER_HEADERS)
+
+
 VALID = ("SH001", "CUST001", "CC", "SKU001", 15, "2026-06-23")  # Tuesday
+VALID_ORDER = ("SH001", "CUST001", "CC", "SKU001", 10, "2026-06-23", "PO-1")
 
 
 def test_template_has_two_sheets():
@@ -48,4 +58,31 @@ def test_missing_value_is_rejected():
 
 def test_invalid_enum_is_rejected():
     df, errors = parse_and_validate(_df(("SH001", "CUST999", "CC", "SKU001", 15, "2026-06-23")))
+    assert df is None and errors
+
+
+# ── Order confirmation ────────────────────────────────────────────────────
+def test_order_template_has_two_sheets():
+    wb = openpyxl.load_workbook(io.BytesIO(make_order_template()))
+    assert wb.sheetnames == ["订单确认数据", "填写说明"]
+    ws = wb["订单确认数据"]
+    assert [ws.cell(1, c).value for c in range(1, 8)] == ORDER_HEADERS
+
+
+def test_order_valid_data_passes_without_date_snap():
+    df, errors = parse_and_validate_order(_odf(VALID_ORDER))
+    assert errors == []
+    # confirmed delivery date is NOT snapped to Monday (kept as actual date)
+    assert df["confirmed_delivery_date"].iloc[0] == date(2026, 6, 23)
+
+
+def test_order_optional_order_no_can_be_blank():
+    df, errors = parse_and_validate_order(
+        _odf(("SH001", "CUST001", "CC", "SKU001", 10, "2026-06-23", None)))
+    assert errors == []
+
+
+def test_order_invalid_enum_is_rejected():
+    df, errors = parse_and_validate_order(
+        _odf(("SH001", "CUST001", "XX", "SKU001", 10, "2026-06-23", "PO-1")))
     assert df is None and errors
