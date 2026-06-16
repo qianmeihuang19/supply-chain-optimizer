@@ -8,6 +8,7 @@ from openpyxl.styles import PatternFill, Font, Alignment
 from openpyxl.worksheet.datavalidation import DataValidation
 
 DEST_OPTIONS = {"CC-长春": "CC", "DL-大连": "DL", "TJ-天津": "TJ"}
+SHIPPERS = ["SH001", "SH002"]
 CUSTOMERS = ["CUST001", "CUST002", "CUST003"]
 SKU_OPTIONS = ["SKU001"]  # single SKU demo; details managed in 系统管理
 
@@ -307,14 +308,16 @@ with tab1:
     st.subheader("新增销售预测")
 
     with st.form("new_forecast"):
-        col1, col2, col3, col4 = st.columns(4)
+        col1, col2, col3, col4, col5 = st.columns(5)
         with col1:
-            customer = st.selectbox("客户", CUSTOMERS)
+            shipper = st.selectbox("货主", SHIPPERS)
         with col2:
-            dest_label = st.selectbox("目的地", list(DEST_OPTIONS.keys()))
+            customer = st.selectbox("客户", CUSTOMERS)
         with col3:
-            sku = st.selectbox("SKU", SKU_OPTIONS)
+            dest_label = st.selectbox("目的地", list(DEST_OPTIONS.keys()))
         with col4:
+            sku = st.selectbox("SKU", SKU_OPTIONS)
+        with col5:
             qty = st.number_input("预测数量(托盘)", min_value=1, max_value=100, value=10)
 
         today = date.today()
@@ -333,7 +336,7 @@ with tab1:
         submitted = st.form_submit_button("提交预测")
         if submitted:
             new_row = pd.DataFrame([{
-                "shipper_id": "",
+                "shipper_id": shipper,
                 "customer_id": customer,
                 "destination": DEST_OPTIONS[dest_label],
                 "sku_id": sku,
@@ -442,25 +445,27 @@ with tab3:
     st.caption("提交客户订单确认，后台自动匹配对应预测（无预测记录时也可提交）")
 
     with st.form("confirm_order"):
-        col1, col2, col3 = st.columns(3)
+        col1, col2, col3, col4 = st.columns(4)
         with col1:
-            c_customer = st.selectbox("客户", CUSTOMERS)
+            c_shipper = st.selectbox("货主", SHIPPERS)
         with col2:
-            c_dest_label = st.selectbox("目的地", list(DEST_OPTIONS.keys()))
+            c_customer = st.selectbox("客户", CUSTOMERS)
         with col3:
+            c_dest_label = st.selectbox("目的地", list(DEST_OPTIONS.keys()))
+        with col4:
             c_sku = st.selectbox("SKU", SKU_OPTIONS)
 
-        col4, col5 = st.columns(2)
-        with col4:
-            c_date = st.date_input("确认交付日期", value=date.today())
+        col5, col6 = st.columns(2)
         with col5:
+            c_date = st.date_input("确认交付日期", value=date.today())
+        with col6:
             c_qty = st.number_input("确认数量(托盘)", min_value=0, max_value=500, value=10)
 
         c_order_no = st.text_input("客户订单号", placeholder="如 PO-2026-00123")
 
         if st.form_submit_button("提交确认"):
             st.success(
-                f"订单已提交：{c_customer} → {c_dest_label}，{c_sku}，"
+                f"订单已提交：货主 {c_shipper} → {c_customer} → {c_dest_label}，{c_sku}，"
                 f"{c_date}，{c_qty} 托盘，订单号 {c_order_no}"
             )
 
