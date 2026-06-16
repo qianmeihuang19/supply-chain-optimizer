@@ -350,8 +350,7 @@ with tab1:
                 st.session_state.forecasts = pd.concat(
                     [st.session_state.forecasts, to_add], ignore_index=True)
                 st.success(
-                    f"预测已提交: {sku} {qty}托盘 → {dest_label}, "
-                    f"第 {week_num} 周（要求日期 {due}，周一）")
+                    f"预测已提交: {sku} {qty}托盘 → {dest_label}, 第 {week_num} 周")
 
     st.divider()
     st.markdown("#### 批量导入")
