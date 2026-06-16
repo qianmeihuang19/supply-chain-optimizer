@@ -13,10 +13,10 @@ SKU_OPTIONS = ["SKU001"]  # single SKU demo; details managed in 系统管理
 
 # Column name ↔ English key mapping (used for template and upload parsing)
 _COL_MAP = {
-    "货主编号": "shipper_id",
+    "货主编号*": "shipper_id",
     "客户编号*": "customer_id",
     "目的地代码*": "destination",
-    "SKU编号": "sku_id",
+    "SKU编号*": "sku_id",
     "预测数量（托盘）*": "quantity_pallets",
     "要求交付日期*": "required_date",
 }
@@ -134,10 +134,10 @@ def _make_excel_template() -> bytes:
         cell.alignment = center
 
     guide_rows = [
-        ("A", "货主编号", "否", "SH001 / SH002", "文本，留空时系统自动关联", "SH001"),
+        ("A", "货主编号", "是（*）", "SH001 / SH002", "从下拉选择", "SH001"),
         ("B", "客户编号", "是（*）", "CUST001 / CUST002 / CUST003", "从下拉选择", "CUST001"),
         ("C", "目的地代码", "是（*）", "CC / DL / TJ", "CC=长春  DL=大连  TJ=天津", "CC"),
-        ("D", "SKU编号", "否", "SKU001", "留空默认填入 SKU001", "SKU001"),
+        ("D", "SKU编号", "是（*）", "SKU001", "从下拉选择", "SKU001"),
         ("E", "预测数量（托盘）", "是（*）", "1–500 整数", "托盘数，正整数", "15"),
         ("F", "要求交付日期", "是（*）",
          "日期，YYYY-MM-DD",
@@ -248,7 +248,7 @@ with tab1:
         df = df.dropna(how="all").reset_index(drop=True)
 
         errors = []
-        required_keys = ["customer_id", "destination", "quantity_pallets", "required_date"]
+        required_keys = ["shipper_id", "customer_id", "destination", "sku_id", "quantity_pallets", "required_date"]
         for key in required_keys:
             if key not in df.columns:
                 errors.append(f"缺少必填列：**{_COL_MAP_INV.get(key, key)}**")
@@ -280,7 +280,7 @@ with tab1:
             df["required_date"] = pd.to_datetime(df["required_date"]).apply(
                 lambda d: (d - pd.Timedelta(days=d.weekday())).date()
             )
-            df["sku_id"] = df.get("sku_id", pd.Series(dtype=str)).fillna("SKU001")
+            df["sku_id"] = df["sku_id"].astype(str)
             if "quantity_pallets" in df.columns:
                 df["quantity_pallets"] = df["quantity_pallets"].astype(int)
 
