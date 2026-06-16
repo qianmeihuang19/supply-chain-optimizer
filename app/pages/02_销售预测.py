@@ -80,14 +80,20 @@ def _make_excel_template() -> bytes:
     dv_sku = DataValidation(
         type="list",
         formula1='"SKU001"',
-        allow_blank=True,
+        allow_blank=False,
         showDropDown=False,
+        showErrorMessage=True,
+        errorTitle="无效SKU编号",
+        error="请从下拉列表选择：SKU001",
     )
     dv_shipper = DataValidation(
         type="list",
         formula1='"SH001,SH002"',
-        allow_blank=True,
+        allow_blank=False,
         showDropDown=False,
+        showErrorMessage=True,
+        errorTitle="无效货主编号",
+        error="请从下拉列表选择：SH001 / SH002",
     )
     dv_qty = DataValidation(
         type="whole",
