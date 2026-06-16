@@ -181,6 +181,67 @@ def _make_excel_template() -> bytes:
     return buf.getvalue()
 
 
+def parse_and_validate(df_raw: pd.DataFrame):
+    """Parse a raw uploaded forecast DataFrame and validate it.
+
+    Pure function (no Streamlit calls) so it can be unit-tested.
+
+    Returns ``(df, errors)``:
+      - ``errors`` is a list of human-readable Chinese error strings.
+      - ``df`` is the cleaned DataFrame (Monday-snapped dates, typed
+        columns) when ``errors`` is empty, otherwise ``None``.
+    """
+    # Rename Chinese headers to English keys
+    rename_map = {col: _COL_MAP[col] for col in df_raw.columns if col in _COL_MAP}
+    df = df_raw.rename(columns=rename_map)
+
+    # Drop fully-empty rows (example row left blank, trailing blanks)
+    df = df.dropna(how="all").reset_index(drop=True)
+
+    errors = []
+    required_keys = ["shipper_id", "customer_id", "destination",
+                     "sku_id", "quantity_pallets", "required_date"]
+    for key in required_keys:
+        if key not in df.columns:
+            errors.append(f"缺少必填列：**{_COL_MAP_INV.get(key, key)}**")
+        elif df[key].isna().any():
+            bad_rows = df.index[df[key].isna()].tolist()
+            errors.append(
+                f"列「{_COL_MAP_INV.get(key, key)}」第 {[r + 2 for r in bad_rows]} 行存在空值"
+            )
+
+    if "customer_id" in df.columns:
+        invalid_cust = set(df["customer_id"].dropna().astype(str)) - _VALID_CUSTOMERS
+        if invalid_cust:
+            errors.append(f"无效客户编号：{invalid_cust}，允许值为 CUST001 / CUST002 / CUST003")
+
+    if "destination" in df.columns:
+        invalid_dest = set(df["destination"].dropna().astype(str)) - _VALID_DESTS
+        if invalid_dest:
+            errors.append(f"无效目的地代码：{invalid_dest}，允许值为 CC / DL / TJ")
+
+    if "sku_id" in df.columns:
+        invalid_sku = set(df["sku_id"].dropna().astype(str)) - _VALID_SKUS
+        if invalid_sku:
+            errors.append(f"无效SKU编号：{invalid_sku}，当前仅支持 SKU001")
+
+    if "shipper_id" in df.columns:
+        invalid_ship = set(df["shipper_id"].dropna().astype(str)) - _VALID_SHIPPERS
+        if invalid_ship:
+            errors.append(f"无效货主编号：{invalid_ship}，允许值为 SH001 / SH002")
+
+    if errors:
+        return None, errors
+
+    # Clean / normalize
+    df["required_date"] = pd.to_datetime(df["required_date"]).apply(
+        lambda d: (d - pd.Timedelta(days=d.weekday())).date()
+    )
+    df["sku_id"] = df["sku_id"].astype(str)
+    df["quantity_pallets"] = df["quantity_pallets"].astype(int)
+    return df, []
+
+
 st.set_page_config(page_title="销售预测管理", page_icon="📈", layout="wide")
 st.title("📈 销售预测管理")
 st.caption("预测录入、置信度修正、订单确认")
@@ -242,59 +303,17 @@ with tab1:
             st.error(f"无法读取文件：{e}，请确认上传的是从模板下载的 .xlsx 文件")
             st.stop()
 
-        # Rename columns to English keys (strip * from required headers)
-        rename_map = {}
-        for col in df_raw.columns:
-            key = _COL_MAP.get(col)
-            if key:
-                rename_map[col] = key
-        df = df_raw.rename(columns=rename_map)
-
-        # Drop fully-empty rows (users often leave example row or trailing blank rows)
-        df = df.dropna(how="all").reset_index(drop=True)
-
-        errors = []
-        required_keys = ["shipper_id", "customer_id", "destination", "sku_id", "quantity_pallets", "required_date"]
-        for key in required_keys:
-            if key not in df.columns:
-                errors.append(f"缺少必填列：**{_COL_MAP_INV.get(key, key)}**")
-            elif df[key].isna().any():
-                bad_rows = df.index[df[key].isna()].tolist()
-                errors.append(f"列「{_COL_MAP_INV.get(key, key)}」第 {[r+2 for r in bad_rows]} 行存在空值")
-
-        if "customer_id" in df.columns:
-            invalid_cust = set(df["customer_id"].dropna().astype(str)) - _VALID_CUSTOMERS
-            if invalid_cust:
-                errors.append(f"无效客户编号：{invalid_cust}，允许值为 CUST001 / CUST002 / CUST003")
-
-        if "destination" in df.columns:
-            invalid_dest = set(df["destination"].dropna().astype(str)) - _VALID_DESTS
-            if invalid_dest:
-                errors.append(f"无效目的地代码：{invalid_dest}，允许值为 CC / DL / TJ")
-
-        if "sku_id" in df.columns:
-            invalid_sku = set(df["sku_id"].dropna().astype(str)) - _VALID_SKUS
-            if invalid_sku:
-                errors.append(f"无效SKU编号：{invalid_sku}，当前仅支持 SKU001")
+        df, errors = parse_and_validate(df_raw)
 
         if errors:
             st.error("上传文件存在以下问题，请修正后重新上传：")
             for e in errors:
                 st.markdown(f"- {e}")
         else:
-            # Snap dates to Monday
-            df["required_date"] = pd.to_datetime(df["required_date"]).apply(
-                lambda d: (d - pd.Timedelta(days=d.weekday())).date()
-            )
-            df["sku_id"] = df["sku_id"].astype(str)
-            if "quantity_pallets" in df.columns:
-                df["quantity_pallets"] = df["quantity_pallets"].astype(int)
-
             display_cols = [c for c in
                 ["shipper_id", "customer_id", "destination", "sku_id",
                  "quantity_pallets", "required_date"]
                 if c in df.columns]
-            display_headers = {k: v for v, k in _COL_MAP.items()}  # eng→zh
 
             st.success(f"解析成功，共 {len(df)} 条预测，请核对后提交")
             st.dataframe(
