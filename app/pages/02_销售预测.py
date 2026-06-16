@@ -45,7 +45,6 @@ with tab1:
 
 with tab2:
     st.subheader("已提交预测列表")
-    st.info("此处显示已录入的销售预测及置信度修正后数量")
     st.dataframe(
         {
             "预测编号": ["F0001", "F0002", "F0003"],
